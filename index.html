@@ -70,9 +70,13 @@
 
     .products {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
       margin-bottom: 2rem;
+      width: 100vw;
+      max-width: 100%;
+      padding: 0 2vw;
+      box-sizing: border-box;
     }
 
     .product-card {
@@ -112,12 +116,31 @@
         <h4>MEHOMIES CAP</h4>
         <p>30 €</p>
       </div>
+
       <div class="product-card">
-        <img src="assets/produit2.jpg" alt="Produit 2">
+        <img src="assets/mehomies_T.webp" alt="Produit 2">
         <h3>Produit 2</h3>
         <p>30 €</p>
       </div>
-      <!-- Ajouter d'autres produits ici -->
+
+      <div class="product-card">
+        <img src="assets/mehomies_T.webp" alt="Produit 2">
+        <h3>Produit 2</h3>
+        <p>30 €</p>
+      </div>
+
+      <div class="product-card">
+        <img src="assets/mehomies_T.webp" alt="Produit 2">
+        <h3>Produit 2</h3>
+        <p>30 €</p>
+      </div>
+    
+       <div class="product-card">
+        <img src="assets/mehomies_T.webp" alt="Produit 2">
+        <h3>Produit 2</h3>
+        <p>30 €</p>
+      </div>
+      
     </section>
   </main>
   <script>
