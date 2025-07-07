@@ -14,13 +14,12 @@
     header {
       background: #000;
       color: white;
-      padding: 0rem;
+      padding: 1rem;
       text-align: center;
     }
     main {
       max-width: 800px;
       margin: 0rem auto;
-      padding: 0rem;
     }
     .product {
       background: white;
@@ -68,6 +67,36 @@
       object-position: center bottom;
       display: block;
     }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .product-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .product-card h3 {
+      margin: 0.5rem 0;
+    }
+
+    .product-card p {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -77,12 +106,21 @@
       <img src="assets/banniere.jpg" alt="Image de présentation" class="hero-image">
     </div>
 
-    <div class="product">
-      <img src="casquette.jpg" alt="Casquette édition limitée">
-      <h2>Casquette Noir & Broderie</h2>
-      <p>Prix : 25€ - Livraison estimée en 3 semaines après validation des précommandes.</p>
-      <a href="https://buy.stripe.com/test_checkout_link" class="btn">Précommander maintenant</a>
-    </div>
+    <section class="products">
+      <div class="product-card">
+        <img src="assets/mehomies_cap.jpg" alt="Produit 1">
+        <h4>MEHOMIES CAP</h4>
+        <p>30 €</p>
+        <a href="#" class="btn">Ajouter au panier</a>
+      </div>
+      <div class="product-card">
+        <img src="assets/produit2.jpg" alt="Produit 2">
+        <h3>Produit 2</h3>
+        <p>30 €</p>
+        <a href="#" class="btn">Ajouter au panier</a>
+      </div>
+      <!-- Ajouter d'autres produits ici -->
+    </section>
   </main>
   <script>
     fetch('header.html')
