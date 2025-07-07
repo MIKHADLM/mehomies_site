@@ -1,0 +1,73 @@
+<style>
+  header {
+    background-color: #000;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 40px;
+    font-family: sans-serif;
+    position: relative;
+    min-height: 100px;
+  }
+  .logo {
+    margin-top: 10px;
+    max-height: 80px;
+    align-items: center;
+
+  }
+  nav {
+    display: flex;
+    gap: 10px;
+  }
+  nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: 500;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  .icon-img {
+    height: 24px;
+    filter: invert(1);
+  }
+  .icon-panier-img {
+    height: 29px;
+    filter: invert(1);
+    padding-left: 10PX;
+  }
+
+  .header-left, .header-right {
+    display: flex;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+  }
+</style>
+<header>
+  <div class="header-left">
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="produits.html">Produits</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+  <div class="header-center">
+    <img src="assets/logo_mehomies400.png" alt="Logo_Mehomies" class="logo">
+  </div>
+  <div class="header-right">
+    <a href="compte.html" class="icon">
+      <img src="assets/compte.png" alt="Compte" class="icon-img">
+    </a>
+    <a href="panier.html" class="icon">
+      <img src="assets/panier.png" alt="Panier" class="icon-panier-img">
+    </a>
+  </div>
+</header>
