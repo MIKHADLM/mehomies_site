@@ -56,39 +56,119 @@
     </script>
 <main>
   <h1>Votre panier</h1>
-  <div id="liste-panier"></div>
+  <table id="liste-panier">
+    <thead>
+      <tr>
+        <th>Produit</th>
+        <th>Prix</th>
+        <th>Quantité</th>
+        <th>Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
   <p class="total">Total : <span id="total">0</span> €</p>
   <a id="payer" class="btn-payer" href="#">Payer</a>
 
   <script>
-    const panier = JSON.parse(localStorage.getItem('panier')) || [];
-    const listePanier = document.getElementById('liste-panier');
-    const totalSpan = document.getElementById('total');
-    const boutonPayer = document.getElementById('payer');
+function afficherPanier() {
+  const panier = JSON.parse(localStorage.getItem('panier')) || [];
+  const tbody = document.querySelector('#liste-panier tbody');
+  const totalSpan = document.getElementById('total');
+  const boutonPayer = document.getElementById('payer');
+  let total = 0;
+  tbody.innerHTML = '';
 
-    let total = 0;
+  if (panier.length === 0) {
+    // Affiche un message si le panier est vide et masque le bouton payer
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.textContent = "Votre panier est vide.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    boutonPayer.style.display = "none";
+    totalSpan.textContent = "0";
+    return;
+  } else {
+    boutonPayer.style.display = "";
+  }
 
-    if (panier.length === 0) {
-      listePanier.innerHTML = "<p>Votre panier est vide.</p>";
-      boutonPayer.style.display = "none";
+  panier.forEach((p, index) => {
+    const tr = document.createElement('tr');
+
+    const tdNom = document.createElement('td');
+    tdNom.textContent = p.nom;
+
+    const tdPrix = document.createElement('td');
+    tdPrix.textContent = `${p.prix.toFixed(2)} €`;
+
+    const tdQuantite = document.createElement('td');
+    tdQuantite.innerHTML = `
+      <button class="moins" data-index="${index}">−</button>
+      ${p.quantite}
+      <button class="plus" data-index="${index}">+</button>
+    `;
+
+    const tdTotal = document.createElement('td');
+    const totalLigne = p.prix * p.quantite;
+    tdTotal.textContent = `${totalLigne.toFixed(2)} €`;
+
+    const tdSuppr = document.createElement('td');
+    const btnSuppr = document.createElement('button');
+    btnSuppr.textContent = 'Supprimer';
+    btnSuppr.dataset.index = index;
+    btnSuppr.className = 'supprimer';
+    tdSuppr.appendChild(btnSuppr);
+
+    tr.append(tdNom, tdPrix, tdQuantite, tdTotal, tdSuppr);
+    tbody.appendChild(tr);
+
+    total += totalLigne;
+  });
+
+  totalSpan.textContent = total.toFixed(2);
+}
+
+document.addEventListener('click', function (e) {
+  let panier = JSON.parse(localStorage.getItem('panier')) || [];
+
+  if (e.target.classList.contains('plus')) {
+    const index = e.target.dataset.index;
+    panier[index].quantite++;
+    localStorage.setItem('panier', JSON.stringify(panier));
+    afficherPanier();
+  }
+
+  if (e.target.classList.contains('moins')) {
+    const index = e.target.dataset.index;
+    if (panier[index].quantite > 1) {
+      panier[index].quantite--;
     } else {
-      panier.forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'panier-item';
-        item.textContent = `${p.nom} × ${p.quantite} — ${(p.prix * p.quantite).toFixed(2)} €`;
-        listePanier.appendChild(item);
-        total += p.prix * p.quantite;
-      });
-
-      totalSpan.textContent = total.toFixed(2);
+      panier.splice(index, 1);
     }
+    localStorage.setItem('panier', JSON.stringify(panier));
+    afficherPanier();
+  }
 
-    // Redirection vers Stripe Checkout (à personnaliser)
-    boutonPayer.addEventListener('click', function (e) {
-      e.preventDefault();
-      // 👉 ici tu mettras ton lien Stripe statique ou généré dynamiquement
-      window.location.href = "https://checkout.stripe.com/pay/TON_LIEN_STRIPE";
-    });
+  if (e.target.classList.contains('supprimer')) {
+    const index = e.target.dataset.index;
+    panier.splice(index, 1);
+    localStorage.setItem('panier', JSON.stringify(panier));
+    afficherPanier();
+  }
+});
+
+afficherPanier();
+
+// Redirection vers Stripe Checkout (à personnaliser)
+const boutonPayer = document.getElementById('payer');
+boutonPayer.addEventListener('click', function (e) {
+  e.preventDefault();
+  // 👉 ici tu mettras ton lien Stripe statique ou généré dynamiquement
+  window.location.href = "https://checkout.stripe.com/pay/TON_LIEN_STRIPE";
+});
   </script>
   </main>
 
