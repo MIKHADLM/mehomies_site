@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panier - MEHOMIES</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0rem auto;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+    .panier-item {
+      background: white;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+    }
+    .total {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+    }
+    .btn-payer {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+    <div id="header"></div>
+    <script>
+      fetch('header.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('header').innerHTML = data;
+        });
+    </script>
+<main>
+  <h1>Votre panier</h1>
+  <div id="liste-panier"></div>
+  <p class="total">Total : <span id="total">0</span> €</p>
+  <a id="payer" class="btn-payer" href="#">Payer</a>
+
+  <script>
+    const panier = JSON.parse(localStorage.getItem('panier')) || [];
+    const listePanier = document.getElementById('liste-panier');
+    const totalSpan = document.getElementById('total');
+    const boutonPayer = document.getElementById('payer');
+
+    let total = 0;
+
+    if (panier.length === 0) {
+      listePanier.innerHTML = "<p>Votre panier est vide.</p>";
+      boutonPayer.style.display = "none";
+    } else {
+      panier.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'panier-item';
+        item.textContent = `${p.nom} × ${p.quantite} — ${(p.prix * p.quantite).toFixed(2)} €`;
+        listePanier.appendChild(item);
+        total += p.prix * p.quantite;
+      });
+
+      totalSpan.textContent = total.toFixed(2);
+    }
+
+    // Redirection vers Stripe Checkout (à personnaliser)
+    boutonPayer.addEventListener('click', function (e) {
+      e.preventDefault();
+      // 👉 ici tu mettras ton lien Stripe statique ou généré dynamiquement
+      window.location.href = "https://checkout.stripe.com/pay/TON_LIEN_STRIPE";
+    });
+  </script>
+  </main>
+
+</body>
+</html>

@@ -199,7 +199,7 @@
 
 
     <section class="products">
-      
+
     </section>
 
   </main>
@@ -210,5 +210,28 @@
         document.getElementById('header').innerHTML = data;
       });
   </script>
+
+  <script>
+  document.querySelectorAll('.ajouter-panier').forEach(bouton => {
+    bouton.addEventListener('click', function () {
+      const id = this.dataset.id;
+      const nom = this.dataset.nom;
+      const prix = parseFloat(this.dataset.prix);
+
+      let panier = JSON.parse(localStorage.getItem('panier')) || [];
+
+      const produitExistant = panier.find(p => p.id === id);
+      if (produitExistant) {
+        produitExistant.quantite++;
+      } else {
+        panier.push({ id, nom, prix, quantite: 1 });
+      }
+
+      localStorage.setItem('panier', JSON.stringify(panier));
+      alert(`${nom} ajouté au panier`);
+    });
+  });
+</script>
+
 </body>
 </html>
