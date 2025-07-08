@@ -115,6 +115,77 @@
       }
     }
   </style>
+
+  <!-- Firebase SDKs -->
+<script type="module">
+  // Import des SDKs nécessaires depuis un CDN moderne
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+ const firebaseConfig = {
+  apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
+  authDomain: "mehomiesstore.firebaseapp.com",
+  projectId: "mehomiesstore",
+  storageBucket: "mehomiesstore.firebasestorage.app",
+  messagingSenderId: "109137836087",
+  appId: "1:109137836087:web:b3a0ea342f8028595e27b2",
+  measurementId: "G-JG06M8XR7F"
+};
+
+  // Initialisation Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const productsContainer = document.querySelector('.products');
+
+  async function chargerProduits() {
+    const querySnapshot = await getDocs(collection(db, "produits"));
+    querySnapshot.forEach((doc) => {
+      const produit = doc.data();
+
+      const card = document.createElement('div');
+      card.className = "product-card";
+
+      card.innerHTML = `
+        <img src="${produit.image}" alt="${produit.nom}">
+        <h4>${produit.nom}</h4>
+        <p>${produit.prix} €</p>
+        <button class="ajouter-panier" data-id="${doc.id}" data-nom="${produit.nom}" data-prix="${produit.prix}">
+          Ajouter au panier
+        </button>
+      `;
+
+      productsContainer.appendChild(card);
+    });
+
+    // Réactive les boutons "Ajouter au panier"
+    activerAjoutPanier();
+  }
+
+  function activerAjoutPanier() {
+    document.querySelectorAll('.ajouter-panier').forEach(bouton => {
+      bouton.addEventListener('click', function () {
+        const id = this.dataset.id;
+        const nom = this.dataset.nom;
+        const prix = parseFloat(this.dataset.prix);
+
+        let panier = JSON.parse(localStorage.getItem('panier')) || [];
+        const produitExistant = panier.find(p => p.id === id);
+        if (produitExistant) {
+          produitExistant.quantite++;
+        } else {
+          panier.push({ id, nom, prix, quantite: 1 });
+        }
+
+        localStorage.setItem('panier', JSON.stringify(panier));
+        alert(`${nom} ajouté au panier`);
+      });
+    });
+  }
+
+  chargerProduits();
+</script>
+
 </head>
 <body>
   <div id="header"></div>
@@ -125,54 +196,6 @@
 
 
     <section class="products">
-      <div class="product-card">
-        <a href="produit.html?id=mehomies_cap" class="product-link">
-          <img src="../Assets/mehomies_cap.jpg" alt="Produit 1">
-          <h4>MEHOMIES CAP</h4>
-            <p>30 €</p>
-        </a>
-      </div> 
-
-      <div class="product-card">
-        <a href="produit.html?id=mehomies_t" class="product-link">
-          <img src="../Assets/mehomies_T.webp" alt="Produit 2">
-          <h4>MEHOMIES T</h4>
-            <p>45 €</p>
-        </a>
-      </div> 
-
-      <div class="product-card">
-        <a href="produit.html?id=mehomies_cap" class="product-link">
-          <img src="../Assets/mehomies_cap.jpg" alt="Produit 1">
-          <h4>MEHOMIES CAP</h4>
-            <p>30 €</p>
-        </a>
-      </div> 
-
-      <div class="product-card">
-        <a href="produit.html?id=mehomies_t" class="product-link">
-          <img src="../Assets/mehomies_T.webp" alt="Produit 2">
-          <h4>MEHOMIES T</h4>
-            <p>45 €</p>
-        </a>
-      </div> 
-
-      <div class="product-card">
-        <a href="produit.html?id=mehomies_cap" class="product-link">
-          <img src="../Assets/mehomies_cap.jpg" alt="Produit 1">
-          <h4>MEHOMIES CAP</h4>
-            <p>30 €</p>
-        </a>
-      </div> 
-
-      <div class="product-card">
-        <a href="produit.html?id=mehomies_t" class="product-link">
-          <img src="../Assets/mehomies_T.webp" alt="Produit 2">
-          <h4>MEHOMIES T</h4>
-            <p>45 €</p>
-        </a>
-      </div> 
-
       
     </section>
   </main>
