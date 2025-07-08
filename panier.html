@@ -258,12 +258,31 @@ function afficherPanier() {
 
 chargerCatalogue().then(() => afficherPanier());
 
-// Redirection vers Stripe Checkout (à personnaliser)
 const boutonPayer = document.getElementById('payer');
 boutonPayer.addEventListener('click', function (e) {
   e.preventDefault();
-  // 👉 ici tu mettras ton lien Stripe statique ou généré dynamiquement
-  window.location.href = "https://checkout.stripe.com/pay/TON_LIEN_STRIPE";
+
+  const panier = JSON.parse(localStorage.getItem('panier')) || [];
+
+  fetch('https://us-central1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ items: panier })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.url) {
+      window.location.href = data.url;  // redirection vers Stripe Checkout
+    } else {
+      alert("Erreur : aucun lien de paiement reçu.");
+    }
+  })
+  .catch(error => {
+    console.error('Erreur Stripe :', error);
+    alert("Une erreur est survenue lors de la création du paiement.");
+  });
 });
   </script>
   </main>
