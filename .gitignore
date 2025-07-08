@@ -1,0 +1,12 @@
+# node_modules contient tous les paquets installés par npm
+node_modules/
+
+# fichiers système Mac
+.DS_Store
+
+# fichiers de log
+npm-debug.log*
+
+# fichiers de configuration perso
+.env
+.vscode/
