@@ -24,8 +24,8 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
         payment_method_types: ['card'],
         line_items: lineItems,
         mode: 'payment',
-        success_url: 'https://mehomies-site.vercel.app/confirmation.html',
-        cancel_url: 'https://mehomies-site.vercel.app/panier.html',
+        success_url: 'https://www.mehomies.com/confirmation.html',
+        cancel_url: 'https://www.mehomies.com/panier.html',
         billing_address_collection: 'required',
         phone_number_collection: {
           enabled: true,
