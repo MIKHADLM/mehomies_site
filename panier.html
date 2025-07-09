@@ -71,6 +71,12 @@
     <tbody></tbody>
   </table>
   <p class="total">Total : <span id="total">0</span> €</p>
+
+  <label>
+  <input type="checkbox" id="remise-main-propre" />
+  Remise en main propre (Sur Lille 59000 seulement)
+</label>
+
   <a id="payer" class="btn-payer" href="#">Payer</a>
 
   <script>
@@ -271,14 +277,15 @@ boutonPayer.addEventListener('click', function (e) {
   e.preventDefault();
 
   const panier = JSON.parse(localStorage.getItem('panier')) || [];
+  const remiseMainPropre = document.getElementById('remise-main-propre').checked;
 
-fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ items: panier })
-})
+  fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ items: panier, isPickup: remiseMainPropre })
+  })
   .then(res => res.json())
   .then(data => {
     if (data.url) {
