@@ -1,9 +1,10 @@
 const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 require('dotenv').config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors")({ origin: true });
 
-exports.createCheckoutSession = functions.https.onRequest((req, res) => {
+exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req, res) => {
   cors(req, res, async () => {
     try {
       const items = req.body.items;
@@ -25,6 +26,14 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         mode: 'payment',
         success_url: 'https://mehomies-site.vercel.app/confirmation.html',
         cancel_url: 'https://mehomies-site.vercel.app/panier.html',
+        billing_address_collection: 'required',
+        phone_number_collection: {
+          enabled: true,
+        },
+        shipping_address_collection: {
+          allowed_countries: ['FR', 'BE', 'DE'],
+        },
+        customer_email: req.body.email,
       });
 
       res.status(200).json({ url: session.url });

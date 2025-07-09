@@ -264,13 +264,13 @@ boutonPayer.addEventListener('click', function (e) {
 
   const panier = JSON.parse(localStorage.getItem('panier')) || [];
 
-  fetch('https://us-central1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ items: panier })
-  })
+fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ items: panier })
+})
   .then(res => res.json())
   .then(data => {
     if (data.url) {
