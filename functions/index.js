@@ -31,7 +31,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
           enabled: true,
         },
         shipping_address_collection: {
-          allowed_countries: ['FR', 'BE', 'DE'],
+          allowed_countries: ['FR'],
         },
         customer_email: req.body.email,
       });
