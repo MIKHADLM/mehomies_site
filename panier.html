@@ -44,6 +44,7 @@
       text-decoration: none;
     }
   </style>
+  <script src="header.js" defer></script>
 </head>
 <body>
     <div id="header"></div>
@@ -52,6 +53,7 @@
         .then(response => response.text())
         .then(data => {
           document.getElementById('header').innerHTML = data;
+          if (typeof updateCartCount === 'function') updateCartCount();
         });
     </script>
 <main>
@@ -139,6 +141,7 @@ document.addEventListener('click', function (e) {
     panier[index].quantite++;
     localStorage.setItem('panier', JSON.stringify(panier));
     afficherPanier();
+    if (typeof updateCartCount === 'function') updateCartCount();
   }
 
   if (e.target.classList.contains('moins')) {
@@ -150,6 +153,7 @@ document.addEventListener('click', function (e) {
     }
     localStorage.setItem('panier', JSON.stringify(panier));
     afficherPanier();
+    if (typeof updateCartCount === 'function') updateCartCount();
   }
 
   if (e.target.classList.contains('supprimer')) {
@@ -157,6 +161,7 @@ document.addEventListener('click', function (e) {
     panier.splice(index, 1);
     localStorage.setItem('panier', JSON.stringify(panier));
     afficherPanier();
+    if (typeof updateCartCount === 'function') updateCartCount();
   }
 });
 
@@ -256,7 +261,10 @@ function afficherPanier() {
   totalSpan.textContent = total.toFixed(2);
 }
 
-chargerCatalogue().then(() => afficherPanier());
+chargerCatalogue().then(() => {
+  afficherPanier();
+  if (typeof updateCartCount === 'function') updateCartCount();
+});
 
 const boutonPayer = document.getElementById('payer');
 boutonPayer.addEventListener('click', function (e) {
