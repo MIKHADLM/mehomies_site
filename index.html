@@ -164,30 +164,33 @@
     activerAjoutPanier();
   }
 
-  function activerAjoutPanier() {
-    document.querySelectorAll('.ajouter-panier').forEach(bouton => {
-      bouton.addEventListener('click', function () {
-        const id = this.dataset.id;
-        const nom = this.dataset.nom;
-        const prix = parseFloat(this.dataset.prix);
+function activerAjoutPanier() {
+  document.querySelectorAll('.ajouter-panier').forEach(bouton => {
+    bouton.addEventListener('click', function () {
+      const id = this.dataset.id;
+      const nom = this.dataset.nom;
+      const prix = parseFloat(this.dataset.prix);
 
-        let panier = JSON.parse(localStorage.getItem('panier')) || [];
-        const produitExistant = panier.find(p => p.id === id);
-        if (produitExistant) {
-          produitExistant.quantite++;
-        } else {
-          panier.push({ id, nom, prix, quantite: 1 });
-        }
+      let panier = JSON.parse(localStorage.getItem('panier')) || [];
+      const produitExistant = panier.find(p => p.id === id);
+      if (produitExistant) {
+        produitExistant.quantite++;
+      } else {
+        panier.push({ id, nom, prix, quantite: 1 });
+      }
 
-        localStorage.setItem('panier', JSON.stringify(panier));
-        alert(`${nom} ajouté au panier`);
-      });
+      localStorage.setItem('panier', JSON.stringify(panier));
+
+      updateCartCount(); // <-- Ajouté ici !
+
+      alert(`${nom} ajouté au panier`);
     });
-  }
+  });
+}
 
   chargerProduits();
 </script>
-
+<script src="header.js" defer></script>
 </head>
 <body>
   <div id="header"></div>
@@ -209,30 +212,9 @@
       .then(response => response.text())
       .then(data => {
         document.getElementById('header').innerHTML = data;
+        if (typeof updateCartCount === 'function') updateCartCount();
       });
   </script>
-
-  <script>
-  document.querySelectorAll('.ajouter-panier').forEach(bouton => {
-    bouton.addEventListener('click', function () {
-      const id = this.dataset.id;
-      const nom = this.dataset.nom;
-      const prix = parseFloat(this.dataset.prix);
-
-      let panier = JSON.parse(localStorage.getItem('panier')) || [];
-
-      const produitExistant = panier.find(p => p.id === id);
-      if (produitExistant) {
-        produitExistant.quantite++;
-      } else {
-        panier.push({ id, nom, prix, quantite: 1 });
-      }
-
-      localStorage.setItem('panier', JSON.stringify(panier));
-      alert(`${nom} ajouté au panier`);
-    });
-  });
-</script>
 
 </body>
 </html>

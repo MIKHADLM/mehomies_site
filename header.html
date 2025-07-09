@@ -50,6 +50,23 @@
     transform: translateX(-50%);
     z-index: 0;
   }
+
+  .cart-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
 </style>
 <header>
   <div class="header-left">
@@ -66,8 +83,12 @@
     <a href="compte.html" class="icon">
       <img src="Assets/compte.png" alt="Compte" class="icon-img">
     </a>
-    <a href="panier.html" class="icon">
-      <img src="Assets/panier.png" alt="Panier" class="icon-panier-img">
-    </a>
+    <a href="panier.html" class="icon panier-icon-wrapper" style="position: relative;">
+  <img src="Assets/panier.png" alt="Panier" class="icon-panier-img">
+  <span id="cart-count" class="cart-count-badge">0</span>
+</a>
+
+
   </div>
 </header>
+<script src="header.js"></script>
