@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Produit - MEHOMIES</title>
+  <script src="header.js" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background-color: #f9f9f9;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .images {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .images img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .infos {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .infos h1 {
+      margin-top: 0;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      margin: 1rem 0;
+      gap: 10px;
+    }
+
+    .quantity-control button {
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .btn-ajouter {
+      padding: 0.75rem 1.5rem;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="container">
+    <div class="images">
+      <img id="produit-image" src="" alt="Image produit">
+    </div>
+    <div class="infos">
+      <h1 id="produit-nom">Nom</h1>
+      <p id="produit-prix">0 €</p>
+      <div class="quantity-control">
+        <button id="moins">−</button>
+        <span id="quantite">1</span>
+        <button id="plus">+</button>
+      </div>
+      <button class="btn-ajouter" id="ajouter-panier">Ajouter au panier</button>
+    </div>
+  </main>
+
+  <!-- Charger le header -->
+  <script>
+    fetch('header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('header').innerHTML = html;
+        if (typeof updateCartCount === 'function') updateCartCount();
+      });
+  </script>
+
+  <!-- Firebase + logique produit -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
+      authDomain: "mehomiesstore.firebaseapp.com",
+      projectId: "mehomiesstore",
+      storageBucket: "mehomiesstore.firebasestorage.app",
+      messagingSenderId: "109137836087",
+      appId: "1:109137836087:web:b3a0ea342f8028595e27b2",
+      measurementId: "G-JG06M8XR7F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const produitId = params.get("id");
+
+    let quantite = 1;
+
+    if (!produitId) {
+      alert("Aucun ID produit trouvé dans l'URL.");
+    } else {
+      const docRef = doc(db, "produits", produitId);
+      getDoc(docRef).then(docSnap => {
+        if (docSnap.exists()) {
+          const produit = docSnap.data();
+          document.getElementById("produit-nom").textContent = produit.nom;
+          document.getElementById("produit-prix").textContent = `${produit.prix} €`;
+          document.getElementById("produit-image").src = produit.image;
+
+          document.getElementById("ajouter-panier").addEventListener("click", () => {
+            let panier = JSON.parse(localStorage.getItem("panier")) || [];
+            const produitExistant = panier.find(p => p.id === produitId);
+
+            if (produitExistant) {
+              produitExistant.quantite += quantite;
+            } else {
+              panier.push({
+                id: produitId,
+                nom: produit.nom,
+                prix: produit.prix,
+                quantite: quantite
+              });
+            }
+
+            localStorage.setItem("panier", JSON.stringify(panier));
+            if (typeof updateCartCount === 'function') updateCartCount();
+            alert(`${produit.nom} ajouté au panier (${quantite})`);
+          });
+        } else {
+          alert("Produit introuvable.");
+        }
+      });
+    }
+
+    // Gestion quantité
+    document.getElementById("plus").addEventListener("click", () => {
+      quantite++;
+      document.getElementById("quantite").textContent = quantite;
+    });
+
+    document.getElementById("moins").addEventListener("click", () => {
+      if (quantite > 1) {
+        quantite--;
+        document.getElementById("quantite").textContent = quantite;
+      }
+    });
+  </script>
+</body>
+</html>
