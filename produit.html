@@ -6,63 +6,93 @@
   <title>Produit - MEHOMIES</title>
   <script src="header.js" defer></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background-color: #f9f9f9;
-    }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 2rem;
+    background-color: #f9f9f9;
+  }
 
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2rem;
-      max-width: 1000px;
-      margin: auto;
-    }
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    max-width: 1000px;
+    margin: auto;
+  }
 
-    .images {
-      flex: 1;
-      min-width: 300px;
-    }
+  .images {
+    flex: 1;
+    min-width: 300px;
+  }
 
-    .images img {
-      width: 100%;
-      border-radius: 8px;
-    }
+  .images img {
+    width: 100%;
+    border-radius: 8px;
+  }
 
-    .infos {
-      flex: 1;
-      min-width: 300px;
-    }
+  .infos {
+    flex: 1;
+    min-width: 300px;
+  }
 
-    .infos h1 {
-      margin-top: 0;
-    }
+  .infos h1 {
+    margin-top: 0;
+  }
 
-    .quantity-control {
-      display: flex;
-      align-items: center;
-      margin: 1rem 0;
-      gap: 10px;
-    }
+  .quantity-control {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    overflow: hidden;
+    background: white;
+    height: 40px;
+    margin: 1rem 0;
+  }
 
-    .quantity-control button {
-      width: 32px;
-      height: 32px;
-      font-size: 18px;
-      cursor: pointer;
-    }
+  .quantity-control button {
+    border: none;
+    background: none;
+    width: 40px;
+    height: 100%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
 
-    .btn-ajouter {
-      padding: 0.75rem 1.5rem;
-      background: black;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-  </style>
+  .quantity-control button:hover {
+    background: #eee;
+  }
+
+  .quantity-control span {
+    padding: 0 15px;
+    min-width: 20px;
+    text-align: center;
+    font-size: 16px;
+  }
+
+  .btn-ajouter {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-ajouter:hover {
+    background: #333;
+    transform: scale(1.02);
+  }
+
+  .btn-ajouter:active {
+    transform: scale(0.98);
+  }
+</style>
 </head>
 <body>
   <div id="header"></div>
@@ -74,6 +104,7 @@
     <div class="infos">
       <h1 id="produit-nom">Nom</h1>
       <p id="produit-prix">0 €</p>
+      <p id="produit-description"></p>
       <div class="quantity-control">
         <button id="moins">−</button>
         <span id="quantite">1</span>
@@ -126,6 +157,7 @@
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
           document.getElementById("produit-image").src = produit.image;
+          document.getElementById("produit-description").textContent = produit.description || "";
 
           document.getElementById("ajouter-panier").addEventListener("click", () => {
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
