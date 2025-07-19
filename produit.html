@@ -82,6 +82,8 @@
     font-size: 16px;
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
+    flex: 1;
+    text-align: center;
   }
 
   .btn-ajouter:hover {
@@ -91,6 +93,13 @@
 
   .btn-ajouter:active {
     transform: scale(0.98);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
   }
 </style>
 </head>
@@ -105,13 +114,15 @@
       <h1 id="produit-nom">Nom</h1>
       <h2 id="produit-prix">0 €</h2>
 
-      <div class="quantity-control">
-        <button id="moins">−</button>
-        <span id="quantite">1</span>
-        <button id="plus">+</button>
+      <div class="actions">
+        <div class="quantity-control">
+          <button id="moins">−</button>
+          <span id="quantite">1</span>
+          <button id="plus">+</button>
+        </div>
+        <button class="btn-ajouter" id="ajouter-panier">Ajouter au panier</button>
       </div>
       
-      <button class="btn-ajouter" id="ajouter-panier">Ajouter au panier</button>
       <p id="produit-description"></p>
     </div>
   </main>
