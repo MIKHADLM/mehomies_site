@@ -445,6 +445,40 @@
       }
     });
     
+    // Support tactile pour slider les images
+    let startX = 0;
+    let isSwiping = false;
+
+    carousel.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      isSwiping = true;
+    });
+
+    carousel.addEventListener("touchmove", (e) => {
+      if (!isSwiping) return;
+      const deltaX = e.touches[0].clientX - startX;
+
+      if (Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          // Swipe vers la droite (image précédente)
+          if (window.images && window.images.length > 1) {
+            window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
+            window.afficherImage(window.imageIndex);
+          }
+        } else {
+          // Swipe vers la gauche (image suivante)
+          if (window.images && window.images.length > 1) {
+            window.imageIndex = (window.imageIndex + 1) % window.images.length;
+            window.afficherImage(window.imageIndex);
+          }
+        }
+        isSwiping = false;
+      }
+    });
+
+    carousel.addEventListener("touchend", () => {
+      isSwiping = false;
+    });
   </script>
 </body>
 </html>
