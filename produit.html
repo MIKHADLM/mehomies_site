@@ -303,6 +303,8 @@
           if (produit.image4) images.push(produit.image4);
           if (produit.image5) images.push(produit.image5);
 
+          window.images = images;
+
           afficherImage(imageIndex);
 
           const descriptionHTML = (produit.description || "")
@@ -386,6 +388,16 @@
     cursor.innerHTML = "&larr;";
     document.body.appendChild(cursor);
 
+    const carousel = document.querySelector(".image-carousel");
+
+    carousel.addEventListener("mouseenter", () => {
+      cursor.style.display = "flex";
+    });
+
+    carousel.addEventListener("mouseleave", () => {
+      cursor.style.display = "none";
+    });
+
     document.addEventListener("mousemove", (e) => {
       cursor.style.left = `${e.clientX - 20}px`;
       cursor.style.top = `${e.clientY - 20}px`;
@@ -398,12 +410,12 @@
     rightZone.addEventListener("mouseenter", () => cursor.innerHTML = "&rarr;");
 
     leftZone.addEventListener("click", () => {
-      imageIndex = (imageIndex - 1 + images.length) % images.length;
+      imageIndex = (imageIndex - 1 + window.images.length) % window.images.length;
       afficherImage(imageIndex);
     });
 
     rightZone.addEventListener("click", () => {
-      imageIndex = (imageIndex + 1) % images.length;
+      imageIndex = (imageIndex + 1) % window.images.length;
       afficherImage(imageIndex);
     });
   </script>
