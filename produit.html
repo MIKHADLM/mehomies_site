@@ -118,6 +118,38 @@
     gap: 1rem;
     margin: 1rem 0;
   }
+
+  .image-carousel {
+    position: relative;
+    width: 100%;
+  }
+
+  .image-carousel img {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    color: black;
+    border: none;
+    font-size: 28px;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .carousel-btn.left {
+    left: 10px;
+  }
+
+  .carousel-btn.right {
+    right: 10px;
+  }
 </style>
 </head>
 <body>
@@ -125,7 +157,11 @@
 
   <main class="container">
     <div class="images">
-      <img id="produit-image" src="" alt="Image produit">
+      <div class="image-carousel">
+        <button class="carousel-btn left">&lt;</button>
+        <img id="produit-image" src="" alt="Image produit">
+        <button class="carousel-btn right">&gt;</button>
+      </div>
     </div>
     <div class="infos">
       <h1 id="produit-nom">Nom</h1>
@@ -177,6 +213,26 @@
 
     let quantite = 1;
 
+    let imageIndex = 0;
+    let images = [];
+
+    function afficherImage(index) {
+      const imgElement = document.getElementById("produit-image");
+      if (images[index]) {
+        imgElement.src = images[index];
+      }
+    }
+
+    document.querySelector(".carousel-btn.left").addEventListener("click", () => {
+      imageIndex = (imageIndex - 1 + images.length) % images.length;
+      afficherImage(imageIndex);
+    });
+
+    document.querySelector(".carousel-btn.right").addEventListener("click", () => {
+      imageIndex = (imageIndex + 1) % images.length;
+      afficherImage(imageIndex);
+    });
+
     if (!produitId) {
       alert("Aucun ID produit trouvé dans l'URL.");
     } else {
@@ -186,7 +242,15 @@
           const produit = docSnap.data();
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
-          document.getElementById("produit-image").src = produit.image;
+
+          images = [produit.image];
+          if (produit.image2) images.push(produit.image2);
+          if (produit.image3) images.push(produit.image3);
+          if (produit.image4) images.push(produit.image4);
+          if (produit.image5) images.push(produit.image5);
+
+          afficherImage(imageIndex);
+
           document.getElementById("produit-description").textContent = produit.description || "";
 
           document.getElementById("ajouter-panier").addEventListener("click", () => {
