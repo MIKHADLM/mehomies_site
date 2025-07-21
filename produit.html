@@ -418,15 +418,15 @@
 
     leftZone.addEventListener("click", () => {
       if (window.images && window.images.length > 1) {
-        imageIndex = (imageIndex - 1 + window.images.length) % window.images.length;
-        afficherImage(imageIndex);
+        window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
+        window.afficherImage(window.imageIndex);
       }
     });
 
     rightZone.addEventListener("click", () => {
       if (window.images && window.images.length > 1) {
-        imageIndex = (imageIndex + 1) % window.images.length;
-        afficherImage(imageIndex);
+        window.imageIndex = (window.imageIndex + 1) % window.images.length;
+        window.afficherImage(window.imageIndex);
       }
     });
   </script>
