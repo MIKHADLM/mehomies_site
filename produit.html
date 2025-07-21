@@ -126,6 +126,10 @@
     cursor: none;
   }
 
+  .image-carousel:hover {
+    cursor: none;
+  }
+
   .carousel-hover-area {
     position: absolute;
     top: 0;
@@ -148,7 +152,7 @@
     height: 40px;
     border-radius: 50%;
     background-color: rgba(0,0,0,0.75);
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     color: white;
@@ -280,7 +284,7 @@
     let imageIndex = 0;
     let images = [];
 
-    function afficherImage(index) {
+    window.afficherImage = function(index) {
       const imgElement = document.getElementById("produit-image");
       if (images[index]) {
         imgElement.src = images[index];
@@ -400,8 +404,10 @@
     });
 
     document.addEventListener("mousemove", (e) => {
-      cursor.style.left = `${e.clientX - 20}px`;
-      cursor.style.top = `${e.clientY - 20}px`;
+      if (carousel.matches(":hover")) {
+        cursor.style.left = `${e.clientX - 20}px`;
+        cursor.style.top = `${e.clientY - 20}px`;
+      }
     });
 
     const leftZone = document.querySelector(".carousel-hover-left");
