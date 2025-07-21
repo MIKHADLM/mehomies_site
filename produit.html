@@ -180,6 +180,7 @@
 
   #produit-description ul {
   list-style-position: inside;
+  margin-top: 1rem;
   padding-left: 0;
   margin-left: 0;
   text-align: justify;
@@ -321,6 +322,35 @@
             localStorage.setItem("panier", JSON.stringify(panier));
             if (typeof updateCartCount === 'function') updateCartCount();
             alert(`${produit.nom} ajouté au panier (${quantite})`);
+          });
+
+          document.getElementById("acheter-maintenant").addEventListener("click", () => {
+            const items = [{
+              id: produitId,
+              nom: produit.nom,
+              prix: produit.prix,
+              quantite: quantite
+            }];
+
+            fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ items, isPickup: false })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.url) {
+                window.location.href = data.url;
+              } else {
+                alert("Erreur : aucun lien de paiement reçu.");
+              }
+            })
+            .catch(error => {
+              console.error('Erreur Stripe :', error);
+              alert("Une erreur est survenue lors de la création du paiement.");
+            });
           });
         } else {
           alert("Produit introuvable.");
