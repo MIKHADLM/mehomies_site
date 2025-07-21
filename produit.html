@@ -251,7 +251,12 @@
 
           afficherImage(imageIndex);
 
-          document.getElementById("produit-description").textContent = produit.description || "";
+          const descriptionHTML = (produit.description || "")
+            .split(/\n+/)
+            .filter(line => line.trim() !== "")
+            .map(line => `<li>${line.trim()}</li>`)
+            .join("");
+          document.getElementById("produit-description").innerHTML = `<ul>${descriptionHTML}</ul>`;
 
           document.getElementById("ajouter-panier").addEventListener("click", () => {
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
