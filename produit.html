@@ -284,6 +284,7 @@
       const imgElement = document.getElementById("produit-image");
       if (images[index]) {
         imgElement.src = images[index];
+        imageIndex = index;
       }
     }
 
@@ -410,13 +411,17 @@
     rightZone.addEventListener("mouseenter", () => cursor.innerHTML = "&rarr;");
 
     leftZone.addEventListener("click", () => {
-      imageIndex = (imageIndex - 1 + window.images.length) % window.images.length;
-      afficherImage(imageIndex);
+      if (window.images && window.images.length > 1) {
+        imageIndex = (imageIndex - 1 + window.images.length) % window.images.length;
+        afficherImage(imageIndex);
+      }
     });
 
     rightZone.addEventListener("click", () => {
-      imageIndex = (imageIndex + 1) % window.images.length;
-      afficherImage(imageIndex);
+      if (window.images && window.images.length > 1) {
+        imageIndex = (imageIndex + 1) % window.images.length;
+        afficherImage(imageIndex);
+      }
     });
   </script>
 </body>
