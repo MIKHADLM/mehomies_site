@@ -123,33 +123,45 @@
   .image-carousel {
     position: relative;
     width: 100%;
+    cursor: none;
+  }
+
+  .carousel-hover-area {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  .carousel-hover-left {
+    left: 0;
+  }
+
+  .carousel-hover-right {
+    right: 0;
+  }
+
+  .custom-cursor {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 22px;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
   }
 
   .image-carousel img {
     width: 100%;
     border-radius: 8px;
     display: block;
-  }
-
-  .carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    color: black;
-    border: none;
-    font-size: 28px;
-    padding: 0 0.5rem;
-    cursor: pointer;
-    z-index: 10;
-  }
-
-  .carousel-btn.left {
-    left: 10px;
-  }
-
-  .carousel-btn.right {
-    right: 10px;
   }
 
   /* Nouveau style pour le bouton Acheter avec Stripe */
@@ -199,9 +211,9 @@
   <main class="container">
     <div class="images">
       <div class="image-carousel">
-        <button class="carousel-btn left">&lt;</button>
         <img id="produit-image" src="" alt="Image produit">
-        <button class="carousel-btn right">&gt;</button>
+        <div class="carousel-hover-area carousel-hover-left"></div>
+        <div class="carousel-hover-area carousel-hover-right"></div>
       </div>
     </div>
     <div class="infos">
@@ -274,16 +286,6 @@
         imgElement.src = images[index];
       }
     }
-
-    document.querySelector(".carousel-btn.left").addEventListener("click", () => {
-      imageIndex = (imageIndex - 1 + images.length) % images.length;
-      afficherImage(imageIndex);
-    });
-
-    document.querySelector(".carousel-btn.right").addEventListener("click", () => {
-      imageIndex = (imageIndex + 1) % images.length;
-      afficherImage(imageIndex);
-    });
 
     if (!produitId) {
       alert("Aucun ID produit trouvé dans l'URL.");
@@ -376,6 +378,33 @@
         quantite--;
         document.getElementById("quantite").textContent = quantite;
       }
+    });
+  </script>
+  <script>
+    const cursor = document.createElement("div");
+    cursor.classList.add("custom-cursor");
+    cursor.innerHTML = "&larr;";
+    document.body.appendChild(cursor);
+
+    document.addEventListener("mousemove", (e) => {
+      cursor.style.left = `${e.clientX - 20}px`;
+      cursor.style.top = `${e.clientY - 20}px`;
+    });
+
+    const leftZone = document.querySelector(".carousel-hover-left");
+    const rightZone = document.querySelector(".carousel-hover-right");
+
+    leftZone.addEventListener("mouseenter", () => cursor.innerHTML = "&larr;");
+    rightZone.addEventListener("mouseenter", () => cursor.innerHTML = "&rarr;");
+
+    leftZone.addEventListener("click", () => {
+      imageIndex = (imageIndex - 1 + images.length) % images.length;
+      afficherImage(imageIndex);
+    });
+
+    rightZone.addEventListener("click", () => {
+      imageIndex = (imageIndex + 1) % images.length;
+      afficherImage(imageIndex);
     });
   </script>
 </body>
