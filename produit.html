@@ -207,6 +207,13 @@
   margin-bottom: 0.5rem;
 }
 
+/* Added media query for disabling custom cursor on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .custom-cursor {
+    display: none !important;
+  }
+}
+
 </style>
   <style>
   @media (max-width: 600px) {
@@ -456,22 +463,18 @@
 
     carousel.addEventListener("touchmove", (e) => {
       if (!isSwiping) return;
-      const deltaX = e.touches[0].clientX - startX;
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - startX;
 
       if (Math.abs(deltaX) > 50) {
         if (deltaX > 0) {
           // Swipe vers la droite (image précédente)
-          if (window.images && window.images.length > 1) {
-            window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
-            window.afficherImage(window.imageIndex);
-          }
+          window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
         } else {
           // Swipe vers la gauche (image suivante)
-          if (window.images && window.images.length > 1) {
-            window.imageIndex = (window.imageIndex + 1) % window.images.length;
-            window.afficherImage(window.imageIndex);
-          }
+          window.imageIndex = (window.imageIndex + 1) % window.images.length;
         }
+        window.afficherImage(window.imageIndex);
         isSwiping = false;
       }
     });
