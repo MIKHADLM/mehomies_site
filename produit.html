@@ -167,6 +167,7 @@
     cursor: pointer;
     transition: background-color 0.3s;
     margin-top: -1rem;
+    margin-bottom: 0.5rem;
   }
 
   .btn-stripe:hover {
@@ -221,6 +222,11 @@
         Acheter avec
         <img src="Assets/stripe-logo.svg" alt="Stripe" class="stripe-logo" />
       </button>
+
+      <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+        <input type="checkbox" id="remise-main-propre" />
+        Remise en main propre (Lille 59000 uniquement)
+      </label>
 
       <p id="produit-description"></p>
     </div>
@@ -332,12 +338,13 @@
               quantite: quantite
             }];
 
+            const isPickup = document.getElementById("remise-main-propre").checked;
             fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ items, isPickup: false })
+              body: JSON.stringify({ items, isPickup })
             })
             .then(res => res.json())
             .then(data => {
