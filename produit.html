@@ -321,12 +321,21 @@
       getDoc(docRef).then(docSnap => {
         if (docSnap.exists()) {
           const produit = docSnap.data();
-          // Test : afficher la valeur brute du stock juste après la description
+          const descriptionHTML = (produit.description || "")
+            .split(/\n+/)
+            .filter(line => line.trim() !== "")
+            .map(line => `<li>${line.trim()}</li>`)
+            .join("");
+
+          const produitDescription = document.getElementById("produit-description");
+          produitDescription.innerHTML = `<ul>${descriptionHTML}</ul>`;
+
           const debugStock = document.createElement("p");
           debugStock.textContent = `Valeur récupérée du champ "stock" : ${produit.stock} (type : ${typeof produit.stock})`;
           debugStock.style.color = "red";
           debugStock.style.marginTop = "2rem";
-          document.getElementById("produit-description").appendChild(debugStock);
+          produitDescription.appendChild(debugStock);
+
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
 
@@ -346,13 +355,6 @@
           window.images = images;
 
           afficherImage(imageIndex);
-
-          const descriptionHTML = (produit.description || "")
-            .split(/\n+/)
-            .filter(line => line.trim() !== "")
-            .map(line => `<li>${line.trim()}</li>`)
-            .join("");
-          document.getElementById("produit-description").innerHTML = `<ul>${descriptionHTML}</ul>`;
 
           // Désactiver les boutons si stock = 0
           if (stock === 0) {
