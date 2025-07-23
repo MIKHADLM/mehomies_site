@@ -1,3 +1,4 @@
+const getRawBody = require('raw-body');
 const functions = require("firebase-functions");
 const { onRequest } = require("firebase-functions/v2/https");
 require('dotenv').config();
@@ -73,33 +74,40 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
     return res.status(405).send("Method Not Allowed");
   }
 
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  getRawBody(req)
+    .then((rawBodyBuffer) => {
+      const sig = req.headers['stripe-signature'];
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  let event;
+      let event;
 
-  try {
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-  } catch (err) {
-    console.error("Webhook Error:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const metadata = session.metadata;
-    const panier = JSON.parse(metadata.panier || "[]");
-
-    panier.forEach(async item => {
-      const produitRef = db.collection("produits").doc(item.id);
-      const doc = await produitRef.get();
-      if (doc.exists) {
-        const currentStock = doc.data().stock || 0;
-        const nouveauStock = Math.max(currentStock - item.quantite, 0);
-        await produitRef.update({ stock: nouveauStock });
+      try {
+        event = stripe.webhooks.constructEvent(rawBodyBuffer, sig, endpointSecret);
+      } catch (err) {
+        console.error("Erreur dans Stripe Webhook :", err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
       }
-    });
-  }
 
-  res.status(200).send('OK');
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const metadata = session.metadata;
+        const panier = JSON.parse(metadata.panier || "[]");
+
+        panier.forEach(async item => {
+          const produitRef = db.collection("produits").doc(item.id);
+          const doc = await produitRef.get();
+          if (doc.exists) {
+            const currentStock = doc.data().stock || 0;
+            const nouveauStock = Math.max(currentStock - item.quantite, 0);
+            await produitRef.update({ stock: nouveauStock });
+          }
+        });
+      }
+
+      res.status(200).send("OK");
+    })
+    .catch(err => {
+      console.error("Erreur raw body :", err);
+      res.status(400).send("Erreur raw body");
+    });
 });

@@ -12,5 +12,8 @@
   "description": "",
   "devDependencies": {
     "serve": "^14.2.4"
+  },
+  "dependencies": {
+    "raw-body": "^3.0.0"
   }
 }
