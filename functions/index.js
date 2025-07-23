@@ -1,6 +1,7 @@
 const getRawBody = require('raw-body');
-const functions = require("firebase-functions");
-const { onRequest } = require("firebase-functions/v2/https");
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+
 require('dotenv').config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors")({ origin: true });
@@ -69,46 +70,44 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
   });
 });
 
-exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
-  // Important : désactiver le parsing automatique du body
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
-  }
+exports.stripeWebhook = onRequest(
+  {
+    memory: "256MB",
+    timeoutSeconds: 30,
+    region: 'europe-west1',
+    rawBody: true,
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
 
-  let rawBody;
-  try {
-    rawBody = await getRawBody(req);
-  } catch (err) {
-    console.error("Erreur lors de la lecture du body brut :", err.message);
-    return res.status(400).send("Erreur lors de la lecture du body brut");
-  }
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+    } catch (err) {
+      console.error("Erreur lors de la vérification du webhook :", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
 
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
-  } catch (err) {
-    console.error("Erreur lors de la vérification du webhook :", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const metadata = session.metadata;
+      const panier = JSON.parse(metadata.panier || "[]");
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const metadata = session.metadata;
-    const panier = JSON.parse(metadata.panier || "[]");
-
-    for (const item of panier) {
-      const produitRef = db.collection("produits").doc(item.id);
-      const doc = await produitRef.get();
-      if (doc.exists) {
-        const currentStock = doc.data().stock || 0;
-        const nouveauStock = Math.max(currentStock - item.quantite, 0);
-        await produitRef.update({ stock: nouveauStock });
+      for (const item of panier) {
+        const produitRef = db.collection("produits").doc(item.id);
+        const doc = await produitRef.get();
+        if (doc.exists) {
+          const currentStock = doc.data().stock || 0;
+          const nouveauStock = Math.max(currentStock - item.quantite, 0);
+          await produitRef.update({ stock: nouveauStock });
+        }
       }
     }
-  }
 
-  res.status(200).send("OK");
-});
+    res.status(200).send("OK");
+  });
