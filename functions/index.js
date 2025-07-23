@@ -3,6 +3,12 @@ const { onRequest } = require("firebase-functions/v2/https");
 require('dotenv').config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors")({ origin: true });
+const express = require("express");
+const bodyParser = require("body-parser");
+const admin = require("firebase-admin");
+
+admin.initializeApp();
+const db = admin.firestore();
 
 exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req, res) => {
   cors(req, res, async () => {
@@ -34,6 +40,10 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
       }
 
       const session = await stripe.checkout.sessions.create({
+        metadata: {
+          panier: JSON.stringify(items),
+          isPickup: String(isPickup)
+        },
         payment_method_types: ['card'],
         line_items: lineItems,
         mode: 'payment',
@@ -54,5 +64,42 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
       console.error(error);
       res.status(500).json({ error: 'Erreur lors de la création de la session Stripe' });
     }
+    
   });
+});
+
+exports.stripeWebhook = functions.https.onRequest((req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).send("Method Not Allowed");
+  }
+
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+  } catch (err) {
+    console.error("Webhook Error:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const metadata = session.metadata;
+    const panier = JSON.parse(metadata.panier || "[]");
+
+    panier.forEach(async item => {
+      const produitRef = db.collection("produits").doc(item.id);
+      const doc = await produitRef.get();
+      if (doc.exists) {
+        const currentStock = doc.data().stock || 0;
+        const nouveauStock = Math.max(currentStock - item.quantite, 0);
+        await produitRef.update({ stock: nouveauStock });
+      }
+    });
+  }
+
+  res.status(200).send('OK');
 });
