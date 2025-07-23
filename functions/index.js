@@ -1,6 +1,7 @@
 const getRawBody = require('raw-body');
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
+const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 
 require('dotenv').config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -76,6 +77,7 @@ exports.stripeWebhook = onRequest(
     timeoutSeconds: 30,
     region: 'europe-west1',
     rawBody: true,
+    secrets: [stripeWebhookSecret],
   },
   async (req, res) => {
     if (req.method !== "POST") {
@@ -83,7 +85,7 @@ exports.stripeWebhook = onRequest(
     }
 
     const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const endpointSecret = stripeWebhookSecret.value();
 
     let event;
     try {
