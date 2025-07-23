@@ -321,6 +321,12 @@
       getDoc(docRef).then(docSnap => {
         if (docSnap.exists()) {
           const produit = docSnap.data();
+          // Test : afficher la valeur brute du stock juste après la description
+          const debugStock = document.createElement("p");
+          debugStock.textContent = `Valeur récupérée du champ "stock" : ${produit.stock} (type : ${typeof produit.stock})`;
+          debugStock.style.color = "red";
+          debugStock.style.marginTop = "2rem";
+          document.getElementById("produit-description").appendChild(debugStock);
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
 
