@@ -330,11 +330,6 @@
           const produitDescription = document.getElementById("produit-description");
           produitDescription.innerHTML = `<ul>${descriptionHTML}</ul>`;
 
-          const debugStock = document.createElement("p");
-          debugStock.textContent = `Valeur récupérée du champ "stock" : ${produit.stock} (type : ${typeof produit.stock})`;
-          debugStock.style.color = "red";
-          debugStock.style.marginTop = "2rem";
-          produitDescription.appendChild(debugStock);
 
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
