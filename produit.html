@@ -324,6 +324,13 @@
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
 
+          // Extraction et affichage du stock
+          const stock = produit.stock || 0;
+          const stockElement = document.createElement("p");
+          stockElement.id = "produit-stock";
+          stockElement.textContent = `${stock} en stock`;
+          document.querySelector(".infos").insertBefore(stockElement, document.querySelector(".actions"));
+
           images = [produit.image];
           if (produit.image2) images.push(produit.image2);
           if (produit.image3) images.push(produit.image3);
@@ -341,7 +348,18 @@
             .join("");
           document.getElementById("produit-description").innerHTML = `<ul>${descriptionHTML}</ul>`;
 
+          // Désactiver les boutons si stock = 0
+          if (stock === 0) {
+            document.getElementById("ajouter-panier").disabled = true;
+            document.getElementById("acheter-maintenant").disabled = true;
+          }
+
           document.getElementById("ajouter-panier").addEventListener("click", () => {
+            // Vérification stock avant ajout au panier
+            if (quantite > stock) {
+              alert("Quantité demandée supérieure au stock disponible.");
+              return;
+            }
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
             const produitExistant = panier.find(p => p.id === produitId);
 
@@ -362,6 +380,11 @@
           });
 
           document.getElementById("acheter-maintenant").addEventListener("click", () => {
+            // Vérification stock avant achat
+            if (quantite > stock) {
+              alert("Quantité demandée supérieure au stock disponible.");
+              return;
+            }
             const items = [{
               id: produitId,
               nom: produit.nom,
@@ -390,24 +413,31 @@
               alert("Une erreur est survenue lors de la création du paiement.");
             });
           });
+
+          // Gestion quantité - Plus (limite au stock)
+          document.getElementById("plus").addEventListener("click", () => {
+            if (quantite < stock) {
+              quantite++;
+              document.getElementById("quantite").textContent = quantite;
+            } else {
+              alert("Stock maximum atteint.");
+            }
+          });
+
+          // Gestion quantité - Moins
+          document.getElementById("moins").addEventListener("click", () => {
+            if (quantite > 1) {
+              quantite--;
+              document.getElementById("quantite").textContent = quantite;
+            }
+          });
         } else {
           alert("Produit introuvable.");
         }
       });
     }
 
-    // Gestion quantité
-    document.getElementById("plus").addEventListener("click", () => {
-      quantite++;
-      document.getElementById("quantite").textContent = quantite;
-    });
-
-    document.getElementById("moins").addEventListener("click", () => {
-      if (quantite > 1) {
-        quantite--;
-        document.getElementById("quantite").textContent = quantite;
-      }
-    });
+    // Les gestionnaires quantité sont désormais dans le bloc getDoc().then(...)
   </script>
   <script>
     const cursor = document.createElement("div");

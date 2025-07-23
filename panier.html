@@ -106,17 +106,39 @@ function afficherPanier() {
   panier.forEach((p, index) => {
     const tr = document.createElement('tr');
 
+    // Récupérer produit complet depuis catalogue
+    const produitInfo = catalogueProduits[p.id] || {};
+    const stock = produitInfo.stock || 99;
+
     const tdNom = document.createElement('td');
-    tdNom.textContent = p.nom;
+    tdNom.style.display = "flex";
+    tdNom.style.alignItems = "center";
+
+    // Image produit (petite taille)
+    const img = document.createElement('img');
+        img.src = produitInfo.image ? `/${produitInfo.image}` : '';
+    img.alt = produitInfo.nom || p.nom;
+    img.style.width = "50px";
+    img.style.height = "50px";
+    img.style.objectFit = "cover";
+    img.style.borderRadius = "6px";
+    img.style.marginRight = "10px";
+
+    const nomSpan = document.createElement('span');
+    nomSpan.textContent = produitInfo.nom || p.nom;
+
+    tdNom.appendChild(img);
+    tdNom.appendChild(nomSpan);
 
     const tdPrix = document.createElement('td');
     tdPrix.textContent = `${p.prix.toFixed(2)} €`;
 
+    const disablePlus = p.quantite >= stock ? 'disabled' : '';
     const tdQuantite = document.createElement('td');
     tdQuantite.innerHTML = `
       <button class="moins" data-index="${index}">−</button>
       ${p.quantite}
-      <button class="plus" data-index="${index}">+</button>
+      <button class="plus" data-index="${index}" ${disablePlus}>+</button>
     `;
 
     const tdTotal = document.createElement('td');
@@ -144,10 +166,14 @@ document.addEventListener('click', function (e) {
 
   if (e.target.classList.contains('plus')) {
     const index = e.target.dataset.index;
-    panier[index].quantite++;
-    localStorage.setItem('panier', JSON.stringify(panier));
-    afficherPanier();
-    if (typeof updateCartCount === 'function') updateCartCount();
+    const produitInfo = catalogueProduits[panier[index].id];
+    const stock = produitInfo?.stock || 99;
+    if (panier[index].quantite < stock) {
+      panier[index].quantite++;
+      localStorage.setItem('panier', JSON.stringify(panier));
+      afficherPanier();
+      if (typeof updateCartCount === 'function') updateCartCount();
+    }
   }
 
   if (e.target.classList.contains('moins')) {
@@ -183,7 +209,8 @@ async function chargerCatalogue() {
     catalogueProduits[doc.name.split('/').pop()] = {
       nom: prod.nom.stringValue,
       prix: parseFloat(prod.prix.doubleValue || prod.prix.integerValue),
-      image: prod.image.stringValue
+      image: prod.image.stringValue,
+      stock: prod.stock ? parseInt(prod.stock.integerValue) : undefined
     };
   });
 }
@@ -216,6 +243,7 @@ function afficherPanier() {
 
     // Récupérer produit complet depuis catalogue
     const produitInfo = catalogueProduits[p.id] || {};
+    const stock = produitInfo.stock || 99;
 
     const tdNom = document.createElement('td');
     tdNom.style.display = "flex";
@@ -240,11 +268,12 @@ function afficherPanier() {
     const tdPrix = document.createElement('td');
     tdPrix.textContent = `${p.prix.toFixed(2)} €`;
 
+    const disablePlus = p.quantite >= stock ? 'disabled' : '';
     const tdQuantite = document.createElement('td');
     tdQuantite.innerHTML = `
       <button class="moins" data-index="${index}">−</button>
       ${p.quantite}
-      <button class="plus" data-index="${index}">+</button>
+      <button class="plus" data-index="${index}" ${disablePlus}>+</button>
     `;
 
     const tdTotal = document.createElement('td');
