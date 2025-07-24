@@ -184,6 +184,7 @@ function afficherPanier() {
     texteConteneur.style.display = "flex";
     texteConteneur.style.flexDirection = "column";
     texteConteneur.style.justifyContent = "flex-start";
+    texteConteneur.style.alignItems = "flex-start";
 
     const nomSpan = document.createElement('span');
     nomSpan.textContent = produitInfo.nom || p.nom;
@@ -194,7 +195,7 @@ function afficherPanier() {
     btnSuppr.textContent = 'Enlever';
     btnSuppr.dataset.index = index;
     btnSuppr.className = 'supprimer';
-    btnSuppr.style.marginTop = "0.25rem";
+    btnSuppr.style.alignSelf = "flex-start";
     btnSuppr.style.background = "none";
     btnSuppr.style.border = "none";
     btnSuppr.style.color = "#000";
