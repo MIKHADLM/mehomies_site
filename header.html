@@ -69,16 +69,46 @@
   font-weight: bold;
 }
 
+@media (max-width: 600px) {
+  .header-left {
+    flex: 1;
+  }
+
+  .header-left .logo {
+    margin-top: 0;
+    margin-left: 0;
+  }
+
+  .header-center {
+    display: none;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-left .mobile-logo {
+    display: block;
+  }
+}
+
+@media (min-width: 601px) {
+  .header-left .mobile-logo {
+    display: none;
+  }
+}
 </style>
 <header>
   <div class="header-left">
-
-
+    <a href="index.html" class="mobile-logo">
+      <img src="Assets/logo_mehomies3.png" alt="Logo_Mehomies" class="logo">
+    </a>
   </div>
 
 
   <div class="header-center">
-    <a href="index.html">
+    <a href="index.html" class="desktop-logo">
     <img src="Assets/logo_mehomies3.png" alt="Logo_Mehomies" class="logo">
     </a>
     
