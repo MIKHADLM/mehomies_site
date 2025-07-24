@@ -147,7 +147,6 @@ function afficherPanier() {
   tbody.innerHTML = '';
 
   if (panier.length === 0) {
-    // Affiche un message si le panier est vide et masque le bouton payer
     const tr = document.createElement('tr');
     const td = document.createElement('td');
     td.colSpan = 5;
@@ -172,32 +171,48 @@ function afficherPanier() {
     tdNom.style.display = "flex";
     tdNom.style.alignItems = "flex-start";
 
-    // Image produit (petite taille)
     const img = document.createElement('img');
     img.src = produitInfo.image ? `/${produitInfo.image}` : '';
     img.alt = produitInfo.nom || p.nom;
-    img.style.width = "80px";
-    img.style.height = "80px";
+    img.style.width = "100px";
+    img.style.height = "100px";
     img.style.objectFit = "cover";
     img.style.borderRadius = "6px";
     img.style.marginRight = "10px";
 
+    const texteConteneur = document.createElement('div');
+    texteConteneur.style.display = "flex";
+    texteConteneur.style.flexDirection = "column";
+    texteConteneur.style.justifyContent = "flex-start";
+
     const nomSpan = document.createElement('span');
     nomSpan.textContent = produitInfo.nom || p.nom;
+    nomSpan.style.fontWeight = "bold";
+    nomSpan.style.marginBottom = "0.25rem";
+
+    const btnSuppr = document.createElement('button');
+    btnSuppr.textContent = 'Enlever';
+    btnSuppr.dataset.index = index;
+    btnSuppr.className = 'supprimer';
+    btnSuppr.style.marginTop = "0.25rem";
+    btnSuppr.style.background = "none";
+    btnSuppr.style.border = "none";
+    btnSuppr.style.color = "#c00";
+    btnSuppr.style.cursor = "pointer";
+    btnSuppr.style.padding = "0";
+
+    texteConteneur.appendChild(nomSpan);
+    texteConteneur.appendChild(btnSuppr);
 
     const lienProduit = document.createElement('a');
     lienProduit.href = `produit.html?id=${p.id}`;
     lienProduit.style.display = "flex";
-    lienProduit.style.alignItems = "center";
+    lienProduit.style.alignItems = "flex-start";
     lienProduit.style.textDecoration = "none";
     lienProduit.style.color = "inherit";
     lienProduit.appendChild(img);
-    lienProduit.appendChild(nomSpan);
-    // Ajouter le bouton sous le titre du produit
-    const sousNom = document.createElement('div');
-    sousNom.appendChild(btnSuppr);
-    sousNom.style.marginTop = '0.25rem';
-    nomSpan.appendChild(sousNom);
+    lienProduit.appendChild(texteConteneur);
+
     tdNom.appendChild(lienProduit);
 
     const tdPrix = document.createElement('td');
@@ -217,14 +232,9 @@ function afficherPanier() {
     const totalLigne = p.prix * p.quantite;
     tdTotal.textContent = `${totalLigne.toFixed(2)} €`;
 
-    const tdSuppr = document.createElement('td');
-    const btnSuppr = document.createElement('button');
-    btnSuppr.textContent = 'Enlever';
-    btnSuppr.dataset.index = index;
-    btnSuppr.className = 'supprimer';
-    // Ne pas ajouter btnSuppr dans tdSuppr
+    // Removed tdSuppr and btnSuppr append here as btnSuppr moved above
 
-    tr.append(tdNom, tdPrix, tdQuantite, tdTotal, tdSuppr);
+    tr.append(tdNom, tdPrix, tdQuantite, tdTotal);
     tbody.appendChild(tr);
 
     total += totalLigne;
@@ -285,96 +295,6 @@ async function chargerCatalogue() {
       stock: prod.stock ? parseInt(prod.stock.integerValue) : undefined
     };
   });
-}
-
-// Modifier afficherPanier pour utiliser l'image et le nom depuis catalogueProduits
-function afficherPanier() {
-  const panier = JSON.parse(localStorage.getItem('panier')) || [];
-  const tbody = document.querySelector('#liste-panier tbody');
-  const totalSpan = document.getElementById('total');
-  const boutonPayer = document.getElementById('payer');
-  let total = 0;
-  tbody.innerHTML = '';
-
-  if (panier.length === 0) {
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.colSpan = 5;
-    td.textContent = "Votre panier est vide.";
-    tr.appendChild(td);
-    tbody.appendChild(tr);
-    boutonPayer.style.display = "none";
-    totalSpan.textContent = "0";
-    return;
-  } else {
-    boutonPayer.style.display = "";
-  }
-
-  panier.forEach((p, index) => {
-    const tr = document.createElement('tr');
-
-    // Récupérer produit complet depuis catalogue
-    const produitInfo = catalogueProduits[p.id] || {};
-    const stock = produitInfo.stock || 99;
-
-    const tdNom = document.createElement('td');
-    tdNom.style.display = "flex";
-    tdNom.style.alignItems = "center";
-
-    // Image produit (petite taille)
-    const img = document.createElement('img');
-        img.src = produitInfo.image ? `/${produitInfo.image}` : '';
-    img.alt = produitInfo.nom || p.nom;
-    img.style.width = "50px";
-    img.style.height = "50px";
-    img.style.objectFit = "cover";
-    img.style.borderRadius = "6px";
-    img.style.marginRight = "10px";
-
-    const nomSpan = document.createElement('span');
-    nomSpan.textContent = produitInfo.nom || p.nom;
-
-    const lienProduit = document.createElement('a');
-    lienProduit.href = `produit.html?id=${p.id}`;
-    lienProduit.style.display = "flex";
-    lienProduit.style.alignItems = "center";
-    lienProduit.style.textDecoration = "none";
-    lienProduit.style.color = "inherit";
-    lienProduit.appendChild(img);
-    lienProduit.appendChild(nomSpan);
-    tdNom.appendChild(lienProduit);
-
-    const tdPrix = document.createElement('td');
-    tdPrix.textContent = `${p.prix.toFixed(2)} €`;
-
-    const disablePlus = p.quantite >= stock ? 'disabled' : '';
-    const tdQuantite = document.createElement('td');
-    tdQuantite.innerHTML = `
-      <div class="quantity-control">
-        <button class="moins" data-index="${index}">−</button>
-        <span>${p.quantite}</span>
-        <button class="plus" data-index="${index}" ${disablePlus}>+</button>
-      </div>
-    `;
-
-    const tdTotal = document.createElement('td');
-    const totalLigne = p.prix * p.quantite;
-    tdTotal.textContent = `${totalLigne.toFixed(2)} €`;
-
-    const tdSuppr = document.createElement('td');
-    const btnSuppr = document.createElement('button');
-    btnSuppr.textContent = 'Supprimer';
-    btnSuppr.dataset.index = index;
-    btnSuppr.className = 'supprimer';
-    tdSuppr.appendChild(btnSuppr);
-
-    tr.append(tdNom, tdPrix, tdQuantite, tdTotal, tdSuppr);
-    tbody.appendChild(tr);
-
-    total += totalLigne;
-  });
-
-  totalSpan.textContent = total.toFixed(2);
 }
 
 chargerCatalogue().then(() => {
