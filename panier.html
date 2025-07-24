@@ -135,6 +135,11 @@
       font-size: 0.95rem;
       margin-bottom: 1rem;
     }
+
+    .quantity-control-mobile {
+      display: none;
+    }
+
      @media (max-width: 600px) {
     body {
       margin: 1rem;
@@ -190,13 +195,52 @@
       padding: 0 8px;
     }
 
-    #liste-panier th:nth-child(3),
-    #liste-panier td:nth-child(3),
-    #liste-panier th:nth-child(4),
-    #liste-panier td:nth-child(4),
-    #liste-panier th:nth-child(5),
-    #liste-panier td:nth-child(5) {
-      display: none;
+  /* Masquer la colonne Quantité et Total dans le tableau sur mobile */
+  #liste-panier th:nth-child(3),
+  #liste-panier td:nth-child(3),
+  #liste-panier th:nth-child(4),
+  #liste-panier td:nth-child(4) {
+    display: none;
+  }
+
+  .quantity-control-mobile {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    overflow: hidden;
+    background: white;
+    height: 32px;
+    margin-top: 0.5rem;
+    width: fit-content;
+  }
+
+  .quantity-control-mobile button {
+    border: none;
+    background: none;
+    width: 32px;
+    height: 100%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .quantity-control-mobile button:hover {
+    background: #eee;
+  }
+
+  .quantity-control-mobile span {
+    padding: 0 8px;
+    min-width: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  /* Cacher ce bloc sur desktop */
+  }
+  @media (min-width: 601px) {
+    .quantity-control-mobile {
+      display: none !important;
     }
   }
   </style>
@@ -274,9 +318,16 @@ function afficherPanier() {
     const produitInfo = catalogueProduits[p.id] || {};
     const stock = produitInfo.stock || 99;
 
+    // Colonne Produit
     const tdNom = document.createElement('td');
     tdNom.style.display = "flex";
+    tdNom.style.flexDirection = "column";
     tdNom.style.alignItems = "flex-start";
+
+    // Lien image + nom + bouton enlever
+    const containerProduit = document.createElement('div');
+    containerProduit.style.display = "flex";
+    containerProduit.style.alignItems = "flex-start";
 
     const img = document.createElement('img');
     img.src = produitInfo.image ? `/${produitInfo.image}` : '';
@@ -311,34 +362,34 @@ function afficherPanier() {
     btnSuppr.style.textDecoration = "underline";
     btnSuppr.style.textDecorationThickness = "1px";
     btnSuppr.style.textDecorationColor = "#000";
-    btnSuppr.addEventListener('mouseover', function() {
-      btnSuppr.style.color = "#000";
-      btnSuppr.style.textDecoration = "underline";
-    });
-    btnSuppr.addEventListener('mouseout', function() {
-      btnSuppr.style.color = "#000";
-      btnSuppr.style.textDecoration = "underline";
-    });
 
     texteConteneur.appendChild(nomSpan);
     texteConteneur.appendChild(btnSuppr);
 
-    const lienProduit = document.createElement('a');
-    lienProduit.href = `produit.html?id=${p.id}`;
-    lienProduit.style.display = "flex";
-    lienProduit.style.alignItems = "flex-start";
-    lienProduit.style.textDecoration = "none";
-    lienProduit.style.color = "inherit";
-    lienProduit.appendChild(img);
-    lienProduit.appendChild(texteConteneur);
+    containerProduit.appendChild(img);
+    containerProduit.appendChild(texteConteneur);
 
-    tdNom.appendChild(lienProduit);
+    tdNom.appendChild(containerProduit);
 
+    // -- Ajout de la quantité mobile uniquement si fenêtre <= 600px --
+    if (window.innerWidth <= 600) {
+      const quantityMobile = document.createElement('div');
+      quantityMobile.className = 'quantity-control-mobile';
+      quantityMobile.innerHTML = `
+        <button class="moins" data-index="${index}">−</button>
+        <span>${p.quantite}</span>
+        <button class="plus" data-index="${index}" ${p.quantite >= stock ? 'disabled' : ''}>+</button>
+      `;
+      tdNom.appendChild(quantityMobile);
+    }
+
+    // Colonne Prix (prix unitaire)
     const tdPrix = document.createElement('td');
     tdPrix.textContent = `${p.prix.toFixed(2)} €`;
 
-    const disablePlus = p.quantite >= stock ? 'disabled' : '';
+    // Colonne Quantité (desktop uniquement)
     const tdQuantite = document.createElement('td');
+    const disablePlus = p.quantite >= stock ? 'disabled' : '';
     tdQuantite.innerHTML = `
       <div class="quantity-control">
         <button class="moins" data-index="${index}">−</button>
@@ -347,11 +398,10 @@ function afficherPanier() {
       </div>
     `;
 
+    // Colonne Total
     const tdTotal = document.createElement('td');
     const totalLigne = p.prix * p.quantite;
     tdTotal.textContent = `${totalLigne.toFixed(2)} €`;
-
-    // Removed tdSuppr and btnSuppr append here as btnSuppr moved above
 
     tr.append(tdNom, tdPrix, tdQuantite, tdTotal);
     tbody.appendChild(tr);
@@ -359,7 +409,12 @@ function afficherPanier() {
     total += totalLigne;
   });
 
-  totalSpan.textContent = total.toFixed(2) + "€";
+  totalSpan.textContent = `${total.toFixed(2)}€`;
+
+  // Ajout écouteur resize pour rafraîchir l'affichage
+  window.addEventListener('resize', () => {
+    afficherPanier();
+  });
 }
 
 document.addEventListener('click', function (e) {
