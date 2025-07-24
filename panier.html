@@ -135,7 +135,72 @@
       font-size: 0.95rem;
       margin-bottom: 1rem;
     }
+     @media (max-width: 600px) {
+    body {
+      margin: 1rem;
+    }
+
+    #liste-panier th,
+    #liste-panier td {
+      padding: 0.5rem 0.25rem;
+      font-size: 14px;
+    }
+
+    #liste-panier td:last-child,
+    #liste-panier th:last-child {
+      text-align: right;
+      white-space: nowrap; /* évite le retour à la ligne entre montant et € */
+    }
+
+    .checkout-section {
+      padding-right: 0.5rem; /* réduire le padding à droite */
+    }
+
+    .checkout-box {
+      max-width: 100%;
+      padding: 1rem;
+      margin-left: 0;
+    }
+
+    /* Pour le prix dans tableau et total, éviter espace entre nombre et € */
+    #liste-panier td:nth-child(2),
+    #liste-panier td:nth-child(4),
+    #total {
+      white-space: nowrap;
+    }
+
+    /* Ajuster la largeur des images dans le panier */
+    #liste-panier td img {
+      width: 70px;
+      height: 70px;
+    }
+
+    /* Ajuster la taille des boutons quantité */
+    .quantity-control {
+      height: 32px;
+    }
+
+    .quantity-control button {
+      width: 32px;
+      font-size: 16px;
+    }
+
+    .quantity-control span {
+      font-size: 14px;
+      padding: 0 8px;
+    }
+
+    #liste-panier th:nth-child(3),
+    #liste-panier td:nth-child(3),
+    #liste-panier th:nth-child(4),
+    #liste-panier td:nth-child(4),
+    #liste-panier th:nth-child(5),
+    #liste-panier td:nth-child(5) {
+      display: none;
+    }
+  }
   </style>
+ 
   <script src="header.js" defer></script>
 </head>
 <body>
