@@ -197,9 +197,20 @@ function afficherPanier() {
     btnSuppr.style.marginTop = "0.25rem";
     btnSuppr.style.background = "none";
     btnSuppr.style.border = "none";
-    btnSuppr.style.color = "#c00";
+    btnSuppr.style.color = "#000";
     btnSuppr.style.cursor = "pointer";
     btnSuppr.style.padding = "0";
+    btnSuppr.style.textDecoration = "underline";
+    btnSuppr.style.textDecorationThickness = "1px";
+    btnSuppr.style.textDecorationColor = "#000";
+    btnSuppr.addEventListener('mouseover', function() {
+      btnSuppr.style.color = "#000";
+      btnSuppr.style.textDecoration = "underline";
+    });
+    btnSuppr.addEventListener('mouseout', function() {
+      btnSuppr.style.color = "#000";
+      btnSuppr.style.textDecoration = "underline";
+    });
 
     texteConteneur.appendChild(nomSpan);
     texteConteneur.appendChild(btnSuppr);
@@ -271,6 +282,8 @@ document.addEventListener('click', function (e) {
   }
 
   if (e.target.classList.contains('supprimer')) {
+    e.preventDefault();
+    e.stopPropagation();
     const index = e.target.dataset.index;
     panier.splice(index, 1);
     localStorage.setItem('panier', JSON.stringify(panier));
