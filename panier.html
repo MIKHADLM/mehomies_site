@@ -5,11 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panier - MEHOMIES</title>
   <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    header {
+      background: #000;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 1rem;
+    }
     body {
       font-family: Arial, sans-serif;
-      margin: 2rem;
+      margin: 0;
+      padding: 0;
       background-color: #f9f9f9;
       color: #333;
+      overflow-x: hidden;
     }
 
     main {
@@ -141,8 +162,22 @@
     }
 
      @media (max-width: 600px) {
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    header {
+      margin: 0;
+      padding: 1rem;
+      width: 100vw;
+      box-sizing: border-box;
+    }
     body {
-      margin: 1rem;
+      margin: 0;
+    }
+    main {
+      padding: 0 1rem;
     }
 
     #liste-panier th,
@@ -513,4 +548,6 @@ boutonPayer.addEventListener('click', function (e) {
   </main>
 
 </body>
+<!-- Header fetch script: ensure not duplicated -->
+<!-- (already present above, do not duplicate) -->
 </html>
