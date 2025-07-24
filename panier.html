@@ -333,16 +333,61 @@ function afficherPanier() {
   tbody.innerHTML = '';
 
   if (panier.length === 0) {
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.colSpan = 5;
-    td.textContent = "Votre panier est vide.";
-    tr.appendChild(td);
-    tbody.appendChild(tr);
+    const main = document.querySelector('main');
+    const table = document.getElementById('liste-panier');
+    const checkout = document.querySelector('.checkout-section');
+    if (table) table.style.display = "none";
+    if (checkout) checkout.style.display = "none";
+
+    // Supprimer ou masquer le titre <h1>Votre panier</h1>
+    const titrePanier = main.querySelector('h1');
+    if (titrePanier) titrePanier.style.display = "none";
+
+    // Supprimer ancien message vide si déjà présent
+    const oldVide = document.getElementById('panier-vide-message');
+    if (oldVide) oldVide.remove();
+
+    const videContainer = document.createElement('div');
+    videContainer.id = 'panier-vide-message';
+    videContainer.style.textAlign = "center";
+    videContainer.style.padding = "3rem 1rem";
+
+    const videTitre = document.createElement('h2');
+    videTitre.textContent = "Votre panier est vide.";
+    videTitre.style.marginBottom = "1rem";
+
+    const lienAccueil = document.createElement('a');
+    lienAccueil.href = "index.html";
+    lienAccueil.textContent = "Continuer mes achats";
+    lienAccueil.style.display = "inline-block";
+    lienAccueil.style.marginTop = "1rem";
+    lienAccueil.style.padding = "0.75rem 1.5rem";
+    lienAccueil.style.backgroundColor = "#000";
+    lienAccueil.style.color = "#fff";
+    lienAccueil.style.borderRadius = "30px";
+    lienAccueil.style.textDecoration = "none";
+    lienAccueil.style.fontWeight = "bold";
+
+    videContainer.appendChild(videTitre);
+    videContainer.appendChild(lienAccueil);
+
+    main.insertBefore(videContainer, main.firstChild);
+
     if(boutonPayer) boutonPayer.style.display = "none";
     totalSpan.textContent = "0";
     return;
   } else {
+    // Afficher à nouveau les éléments si panier non vide
+    const table = document.getElementById('liste-panier');
+    const checkout = document.querySelector('.checkout-section');
+    if (table) table.style.display = "";
+    if (checkout) checkout.style.display = "";
+    // Réafficher le titre <h1>Votre panier</h1> si caché précédemment
+    const main = document.querySelector('main');
+    const titrePanier = main.querySelector('h1');
+    if (titrePanier) titrePanier.style.display = "";
+    const oldVide = document.getElementById('panier-vide-message');
+    if (oldVide) oldVide.remove();
     if(boutonPayer) boutonPayer.style.display = "";
   }
 
