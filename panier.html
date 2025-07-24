@@ -13,8 +13,19 @@
     }
 
     main {
-      max-width: 800px;
-      margin: 0rem auto;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    #liste-panier {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #liste-panier th,
+    #liste-panier td {
+      padding: 0.75rem;
+      text-align: left;
     }
 
     h1 {
@@ -32,16 +43,60 @@
       font-size: 1.2rem;
       margin-top: 1.5rem;
     }
-    .btn-payer {
-      display: inline-block;
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      background: black;
+
+    .quantity-control {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #ccc;
+      border-radius: 30px;
+      overflow: hidden;
+      background: white;
+      height: 40px;
+    }
+
+    .quantity-control button {
+      border: none;
+      background: none;
+      width: 40px;
+      height: 100%;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .quantity-control button:hover {
+      background: #eee;
+    }
+
+    .quantity-control span {
+      padding: 0 15px;
+      min-width: 20px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .btn-stripe {
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
+      background-color: #6772e5;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 30px;
+      padding: 10px 20px;
+      font-weight: 600;
       cursor: pointer;
-      text-decoration: none;
+      transition: background-color 0.3s;
+      margin-top: 1rem;
+    }
+
+    .btn-stripe:hover {
+      background-color: #5469d4;
+    }
+
+    .stripe-logo {
+      height: 25px;
+      width: auto;
     }
   </style>
   <script src="header.js" defer></script>
@@ -71,13 +126,16 @@
     <tbody></tbody>
   </table>
   <p class="total">Total : <span id="total">0</span> €</p>
-
+  
   <label>
   <input type="checkbox" id="remise-main-propre" />
   Remise en main propre (Sur Lille 59000 seulement)
 </label>
 
-  <a id="payer" class="btn-payer" href="#">Payer</a>
+  <button id="payer" class="btn-stripe">
+    Payer avec
+    <img src="Assets/stripe-logo.svg" alt="Stripe" class="stripe-logo" />
+  </button>
 
   <script>
 function afficherPanier() {
@@ -112,14 +170,14 @@ function afficherPanier() {
 
     const tdNom = document.createElement('td');
     tdNom.style.display = "flex";
-    tdNom.style.alignItems = "center";
+    tdNom.style.alignItems = "flex-start";
 
     // Image produit (petite taille)
     const img = document.createElement('img');
-        img.src = produitInfo.image ? `/${produitInfo.image}` : '';
+    img.src = produitInfo.image ? `/${produitInfo.image}` : '';
     img.alt = produitInfo.nom || p.nom;
-    img.style.width = "50px";
-    img.style.height = "50px";
+    img.style.width = "80px";
+    img.style.height = "80px";
     img.style.objectFit = "cover";
     img.style.borderRadius = "6px";
     img.style.marginRight = "10px";
@@ -127,8 +185,20 @@ function afficherPanier() {
     const nomSpan = document.createElement('span');
     nomSpan.textContent = produitInfo.nom || p.nom;
 
-    tdNom.appendChild(img);
-    tdNom.appendChild(nomSpan);
+    const lienProduit = document.createElement('a');
+    lienProduit.href = `produit.html?id=${p.id}`;
+    lienProduit.style.display = "flex";
+    lienProduit.style.alignItems = "center";
+    lienProduit.style.textDecoration = "none";
+    lienProduit.style.color = "inherit";
+    lienProduit.appendChild(img);
+    lienProduit.appendChild(nomSpan);
+    // Ajouter le bouton sous le titre du produit
+    const sousNom = document.createElement('div');
+    sousNom.appendChild(btnSuppr);
+    sousNom.style.marginTop = '0.25rem';
+    nomSpan.appendChild(sousNom);
+    tdNom.appendChild(lienProduit);
 
     const tdPrix = document.createElement('td');
     tdPrix.textContent = `${p.prix.toFixed(2)} €`;
@@ -136,9 +206,11 @@ function afficherPanier() {
     const disablePlus = p.quantite >= stock ? 'disabled' : '';
     const tdQuantite = document.createElement('td');
     tdQuantite.innerHTML = `
-      <button class="moins" data-index="${index}">−</button>
-      ${p.quantite}
-      <button class="plus" data-index="${index}" ${disablePlus}>+</button>
+      <div class="quantity-control">
+        <button class="moins" data-index="${index}">−</button>
+        <span>${p.quantite}</span>
+        <button class="plus" data-index="${index}" ${disablePlus}>+</button>
+      </div>
     `;
 
     const tdTotal = document.createElement('td');
@@ -147,10 +219,10 @@ function afficherPanier() {
 
     const tdSuppr = document.createElement('td');
     const btnSuppr = document.createElement('button');
-    btnSuppr.textContent = 'Supprimer';
+    btnSuppr.textContent = 'Enlever';
     btnSuppr.dataset.index = index;
     btnSuppr.className = 'supprimer';
-    tdSuppr.appendChild(btnSuppr);
+    // Ne pas ajouter btnSuppr dans tdSuppr
 
     tr.append(tdNom, tdPrix, tdQuantite, tdTotal, tdSuppr);
     tbody.appendChild(tr);
@@ -262,8 +334,15 @@ function afficherPanier() {
     const nomSpan = document.createElement('span');
     nomSpan.textContent = produitInfo.nom || p.nom;
 
-    tdNom.appendChild(img);
-    tdNom.appendChild(nomSpan);
+    const lienProduit = document.createElement('a');
+    lienProduit.href = `produit.html?id=${p.id}`;
+    lienProduit.style.display = "flex";
+    lienProduit.style.alignItems = "center";
+    lienProduit.style.textDecoration = "none";
+    lienProduit.style.color = "inherit";
+    lienProduit.appendChild(img);
+    lienProduit.appendChild(nomSpan);
+    tdNom.appendChild(lienProduit);
 
     const tdPrix = document.createElement('td');
     tdPrix.textContent = `${p.prix.toFixed(2)} €`;
@@ -271,9 +350,11 @@ function afficherPanier() {
     const disablePlus = p.quantite >= stock ? 'disabled' : '';
     const tdQuantite = document.createElement('td');
     tdQuantite.innerHTML = `
-      <button class="moins" data-index="${index}">−</button>
-      ${p.quantite}
-      <button class="plus" data-index="${index}" ${disablePlus}>+</button>
+      <div class="quantity-control">
+        <button class="moins" data-index="${index}">−</button>
+        <span>${p.quantite}</span>
+        <button class="plus" data-index="${index}" ${disablePlus}>+</button>
+      </div>
     `;
 
     const tdTotal = document.createElement('td');
