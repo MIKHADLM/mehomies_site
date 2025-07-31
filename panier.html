@@ -338,24 +338,17 @@ function afficherPanier() {
     const checkout = document.querySelector('.checkout-section');
     if (table) table.style.display = "none";
     if (checkout) checkout.style.display = "none";
-
-    // Supprimer ou masquer le titre <h1>Votre panier</h1>
     const titrePanier = main.querySelector('h1');
     if (titrePanier) titrePanier.style.display = "none";
-
-    // Supprimer ancien message vide si déjà présent
     const oldVide = document.getElementById('panier-vide-message');
     if (oldVide) oldVide.remove();
-
     const videContainer = document.createElement('div');
     videContainer.id = 'panier-vide-message';
     videContainer.style.textAlign = "center";
     videContainer.style.padding = "3rem 1rem";
-
     const videTitre = document.createElement('h2');
     videTitre.textContent = "Votre panier est vide.";
     videTitre.style.marginBottom = "1rem";
-
     const lienAccueil = document.createElement('a');
     lienAccueil.href = "index.html";
     lienAccueil.textContent = "Continuer mes achats";
@@ -367,22 +360,17 @@ function afficherPanier() {
     lienAccueil.style.borderRadius = "30px";
     lienAccueil.style.textDecoration = "none";
     lienAccueil.style.fontWeight = "bold";
-
     videContainer.appendChild(videTitre);
     videContainer.appendChild(lienAccueil);
-
     main.insertBefore(videContainer, main.firstChild);
-
     if(boutonPayer) boutonPayer.style.display = "none";
     totalSpan.textContent = "0";
     return;
   } else {
-    // Afficher à nouveau les éléments si panier non vide
     const table = document.getElementById('liste-panier');
     const checkout = document.querySelector('.checkout-section');
     if (table) table.style.display = "";
     if (checkout) checkout.style.display = "";
-    // Réafficher le titre <h1>Votre panier</h1> si caché précédemment
     const main = document.querySelector('main');
     const titrePanier = main.querySelector('h1');
     if (titrePanier) titrePanier.style.display = "";
@@ -393,10 +381,17 @@ function afficherPanier() {
 
   panier.forEach((p, index) => {
     const tr = document.createElement('tr');
-
     // Récupérer produit complet depuis catalogue
     const produitInfo = catalogueProduits[p.id] || {};
-    const stock = produitInfo.stock || 99;
+    // Gestion du stock par taille si applicable
+    let stock = 99;
+    if (produitInfo.stock !== undefined) {
+      if (typeof produitInfo.stock === "object" && p.taille) {
+        stock = produitInfo.stock[p.taille] !== undefined ? produitInfo.stock[p.taille] : 0;
+      } else if (typeof produitInfo.stock === "number") {
+        stock = produitInfo.stock;
+      }
+    }
 
     // Colonne Produit
     const tdNom = document.createElement('td');
@@ -424,11 +419,21 @@ function afficherPanier() {
     texteConteneur.style.justifyContent = "flex-start";
     texteConteneur.style.alignItems = "flex-start";
 
-
     const nomSpan = document.createElement('span');
     nomSpan.textContent = produitInfo.nom || p.nom;
     nomSpan.style.fontWeight = "bold";
     nomSpan.style.marginBottom = "0.25rem";
+    texteConteneur.appendChild(nomSpan);
+
+    // Ajout de la taille si elle existe
+    if (p.taille) {
+      const tailleSpan = document.createElement('span');
+      tailleSpan.textContent = `Taille : ${p.taille}`;
+      tailleSpan.style.fontSize = "0.95em";
+      tailleSpan.style.marginBottom = "0.25rem";
+      tailleSpan.style.color = "#555";
+      texteConteneur.appendChild(tailleSpan);
+    }
 
     const btnSuppr = document.createElement('button');
     btnSuppr.textContent = 'Enlever';
@@ -443,28 +448,24 @@ function afficherPanier() {
     btnSuppr.style.textDecoration = "underline";
     btnSuppr.style.textDecorationThickness = "1px";
     btnSuppr.style.textDecorationColor = "#000";
-
-    texteConteneur.appendChild(nomSpan);
     texteConteneur.appendChild(btnSuppr);
 
     // -- Ajout de la quantité mobile uniquement si fenêtre <= 600px --
     if (window.innerWidth <= 600) {
       const quantityMobile = document.createElement('div');
       quantityMobile.className = 'quantity-control-mobile';
+      // Désactiver le + si stock atteint (par taille si applicable)
       quantityMobile.innerHTML = `
         <button class="moins" data-index="${index}">−</button>
         <span>${p.quantite}</span>
         <button class="plus" data-index="${index}" ${p.quantite >= stock ? 'disabled' : ''}>+</button>
       `;
-      // Insérer la quantité mobile après le bouton supprimer
       texteConteneur.appendChild(quantityMobile);
     }
 
     containerProduit.appendChild(img);
     containerProduit.appendChild(texteConteneur);
-
     tdNom.appendChild(containerProduit);
-
 
     // Colonne Prix (prix unitaire)
     const tdPrix = document.createElement('td');
@@ -488,7 +489,6 @@ function afficherPanier() {
 
     tr.append(tdNom, tdPrix, tdQuantite, tdTotal);
     tbody.appendChild(tr);
-
     total += totalLigne;
   });
 
@@ -506,7 +506,14 @@ document.addEventListener('click', function (e) {
   if (e.target.classList.contains('plus')) {
     const index = e.target.dataset.index;
     const produitInfo = catalogueProduits[panier[index].id];
-    const stock = produitInfo?.stock || 99;
+    let stock = 99;
+    if (produitInfo && produitInfo.stock !== undefined) {
+      if (typeof produitInfo.stock === "object" && panier[index].taille) {
+        stock = produitInfo.stock[panier[index].taille] !== undefined ? produitInfo.stock[panier[index].taille] : 0;
+      } else if (typeof produitInfo.stock === "number") {
+        stock = produitInfo.stock;
+      }
+    }
     if (panier[index].quantite < stock) {
       panier[index].quantite++;
       localStorage.setItem('panier', JSON.stringify(panier));
@@ -547,11 +554,27 @@ async function chargerCatalogue() {
 
   data.documents.forEach(doc => {
     const prod = doc.fields;
+    // Gestion du stock par taille si présent
+    let stockValue;
+    if (prod.stock) {
+      if (prod.stock.mapValue && prod.stock.mapValue.fields) {
+        // Stock par taille (objet)
+        stockValue = {};
+        for (const taille in prod.stock.mapValue.fields) {
+          const val = prod.stock.mapValue.fields[taille];
+          stockValue[taille] = val.integerValue !== undefined ? parseInt(val.integerValue) : (val.doubleValue !== undefined ? parseFloat(val.doubleValue) : 0);
+        }
+      } else if (prod.stock.integerValue !== undefined) {
+        stockValue = parseInt(prod.stock.integerValue);
+      } else if (prod.stock.doubleValue !== undefined) {
+        stockValue = parseFloat(prod.stock.doubleValue);
+      }
+    }
     catalogueProduits[doc.name.split('/').pop()] = {
       nom: prod.nom.stringValue,
       prix: parseFloat(prod.prix.doubleValue || prod.prix.integerValue),
       image: prod.image.stringValue,
-      stock: prod.stock ? parseInt(prod.stock.integerValue) : undefined
+      stock: stockValue
     };
   });
 }
