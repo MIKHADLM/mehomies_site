@@ -246,10 +246,7 @@
       <h1 id="produit-nom">Nom</h1>
       <h2 id="produit-prix">0 €</h2>
 
-      <label for="taille-select">Taille :</label>
-      <select id="taille-select" style="margin: 0.5rem 0; padding: 0.5rem; border-radius: 5px;">
-        <option value="">Sélectionnez une taille</option>
-      </select>
+      <div id="taille-buttons-container" style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
 
       <div class="actions">
         <div class="quantity-control">
@@ -339,44 +336,49 @@
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
 
-          // Ajout des tailles dans le select ou masquage si aucune taille
+          // Gestion des tailles avec boutons
           const tailles = produit.tailles || [];
-          const selectTaille = document.getElementById("taille-select");
-          const labelTaille = document.querySelector("label[for='taille-select']");
-          
+          const tailleContainer = document.getElementById("taille-buttons-container");
+          let selectedTaille = tailles.length > 0 ? tailles[0] : null;
           if (tailles.length > 0) {
             tailles.forEach(taille => {
-              const option = document.createElement("option");
-              option.value = taille;
-              option.textContent = taille;
-              selectTaille.appendChild(option);
+              const btn = document.createElement("button");
+              btn.textContent = taille;
+              btn.type = "button";
+              btn.style.padding = "0.5rem 1rem";
+              btn.style.border = "1px solid #ccc";
+              btn.style.borderRadius = "20px";
+              btn.style.cursor = "pointer";
+              btn.style.background = taille === selectedTaille ? "#000" : "#fff";
+              btn.style.color = taille === selectedTaille ? "#fff" : "#000";
+              btn.addEventListener("click", () => {
+                selectedTaille = taille;
+                [...tailleContainer.children].forEach(b => {
+                  b.style.background = "#fff";
+                  b.style.color = "#000";
+                });
+                btn.style.background = "#000";
+                btn.style.color = "#fff";
+                if (produit.stock && typeof produit.stock === 'object') {
+                  currentStock = produit.stock[selectedTaille] || 0;
+                }
+                if (quantite > currentStock) {
+                  quantite = currentStock > 0 ? 1 : 0;
+                  document.getElementById("quantite").textContent = quantite;
+                }
+                document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+                document.getElementById("ajouter-panier").disabled = currentStock === 0;
+                document.getElementById("acheter-maintenant").disabled = currentStock === 0;
+              });
+              tailleContainer.appendChild(btn);
             });
-          } else {
-            // Masquer le select et son label s'il n'y a pas de tailles
-            selectTaille.style.display = "none";
-            labelTaille.style.display = "none";
-          }
-          // Si tailles, écouteur pour mettre à jour le stock affiché et les contrôles selon la taille sélectionnée
-          if (tailles.length > 0) {
-            selectTaille.addEventListener("change", () => {
-              const selected = selectTaille.value;
-              if (produit.stock && typeof produit.stock === 'object') {
-                currentStock = produit.stock[selected] || 0;
-              } else if (typeof produit.stock === 'number') {
-                currentStock = produit.stock;
-              } else {
-                currentStock = 0;
-              }
-              // Réinitialise la quantité si elle dépasse le nouveau stock
-              if (quantite > currentStock) {
-                quantite = currentStock > 0 ? 1 : 0;
-                document.getElementById("quantite").textContent = quantite;
-              }
+            // Initialiser le stock affiché avec la première taille sélectionnée
+            if (produit.stock && typeof produit.stock === 'object') {
+              currentStock = produit.stock[selectedTaille] || 0;
               document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
-              // Désactive les boutons si plus de stock pour cette taille
-              document.getElementById("ajouter-panier").disabled = currentStock === 0;
-              document.getElementById("acheter-maintenant").disabled = currentStock === 0;
-            });
+            }
+          } else {
+            tailleContainer.style.display = "none";
           }
 
           // Extraction et affichage du stock (gère le stock par taille)
@@ -409,14 +411,9 @@
               alert("Quantité demandée supérieure au stock disponible.");
               return;
             }
-            const selectTailleElem = document.getElementById("taille-select");
-            let selectedTaille = "";
-            if (selectTailleElem && selectTailleElem.style.display !== "none") {
-              selectedTaille = selectTailleElem.value;
-              if (!selectedTaille) {
-                alert("Veuillez sélectionner une taille.");
-                return;
-              }
+            if (tailles.length > 0 && !selectedTaille) {
+              alert("Veuillez sélectionner une taille.");
+              return;
             }
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
             // On cherche la clé unique id+taille si applicable
@@ -450,14 +447,9 @@
               alert("Quantité demandée supérieure au stock disponible.");
               return;
             }
-            const selectTailleElem = document.getElementById("taille-select");
-            let selectedTaille = "";
-            if (selectTailleElem && selectTailleElem.style.display !== "none") {
-              selectedTaille = selectTailleElem.value;
-              if (!selectedTaille) {
-                alert("Veuillez sélectionner une taille.");
-                return;
-              }
+            if (tailles.length > 0 && !selectedTaille) {
+              alert("Veuillez sélectionner une taille.");
+              return;
             }
             const items = [{
               id: produitId,
