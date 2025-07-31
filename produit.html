@@ -343,7 +343,7 @@
           const tailles = produit.tailles || [];
           const selectTaille = document.getElementById("taille-select");
           const labelTaille = document.querySelector("label[for='taille-select']");
-
+          
           if (tailles.length > 0) {
             tailles.forEach(taille => {
               const option = document.createElement("option");
@@ -351,35 +351,6 @@
               option.textContent = taille;
               selectTaille.appendChild(option);
             });
-            // Pré-sélectionner la première taille disponible avec stock > 0
-            if (tailles.length > 0 && typeof produit.stock === 'object') {
-              for (const taille of tailles) {
-                if (produit.stock[taille] > 0) {
-                  selectTaille.value = taille;
-                  // Met à jour explicitement tout ce qui est fait dans l'écouteur "change"
-                  let currentStock;
-                  if (produit.stock && typeof produit.stock === 'object') {
-                    currentStock = produit.stock[taille] || 0;
-                  } else if (typeof produit.stock === 'number') {
-                    currentStock = produit.stock;
-                  } else {
-                    currentStock = 0;
-                  }
-                  // Réinitialise la quantité si elle dépasse le nouveau stock
-                  if (quantite > currentStock) {
-                    quantite = currentStock > 0 ? 1 : 0;
-                    document.getElementById("quantite").textContent = quantite;
-                  }
-                  document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
-                  // Désactive les boutons si plus de stock pour cette taille
-                  document.getElementById("ajouter-panier").disabled = currentStock === 0;
-                  document.getElementById("acheter-maintenant").disabled = currentStock === 0;
-                  // Met à jour la variable globale currentStock pour la quantité
-                  window.currentStock = currentStock;
-                  break;
-                }
-              }
-            }
           } else {
             // Masquer le select et son label s'il n'y a pas de tailles
             selectTaille.style.display = "none";
@@ -408,20 +379,13 @@
             });
           }
 
-          // Création dynamique de l'élément affichant le stock (une seule fois, juste après le prix)
-          const stockElement = document.createElement("p");
-          stockElement.id = "produit-stock";
-          stockElement.textContent = "";
-          document.querySelector(".infos").insertBefore(stockElement, document.querySelector(".actions"));
-
-          // Initialisation du stock affiché si pas de tailles
+          // Extraction et affichage du stock (gère le stock par taille)
           let stock = produit.stock;
           let currentStock = typeof stock === 'number' ? stock : 0;
-          if (!(tailles.length > 0)) {
-            document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
-            document.getElementById("ajouter-panier").disabled = currentStock === 0;
-            document.getElementById("acheter-maintenant").disabled = currentStock === 0;
-          }
+          const stockElement = document.createElement("p");
+          stockElement.id = "produit-stock";
+          stockElement.textContent = `${currentStock} en stock`;
+          document.querySelector(".infos").insertBefore(stockElement, document.querySelector(".actions"));
 
           images = [produit.image];
           if (produit.image2) images.push(produit.image2);
@@ -433,6 +397,11 @@
 
           afficherImage(imageIndex);
 
+          // Désactiver les boutons si stock = 0
+          if (currentStock === 0) {
+            document.getElementById("ajouter-panier").disabled = true;
+            document.getElementById("acheter-maintenant").disabled = true;
+          }
 
           document.getElementById("ajouter-panier").addEventListener("click", () => {
             // Vérification stock avant ajout au panier (selon taille le cas échéant)
