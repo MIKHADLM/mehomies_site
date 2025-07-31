@@ -351,6 +351,16 @@
               option.textContent = taille;
               selectTaille.appendChild(option);
             });
+            // Désactiver les boutons si aucune taille sélectionnée par défaut
+            const defaultOption = selectTaille.querySelector('option[value=""]');
+            if (defaultOption && selectTaille.value === "") {
+              document.getElementById("ajouter-panier").disabled = true;
+              document.getElementById("acheter-maintenant").disabled = true;
+              document.getElementById("ajouter-panier").style.opacity = "0.5";
+              document.getElementById("acheter-maintenant").style.opacity = "0.5";
+              document.getElementById("ajouter-panier").style.pointerEvents = "none";
+              document.getElementById("acheter-maintenant").style.pointerEvents = "none";
+            }
           } else {
             // Masquer le select et son label s'il n'y a pas de tailles
             selectTaille.style.display = "none";
@@ -359,6 +369,23 @@
           // Si tailles, écouteur pour mettre à jour le stock affiché et les contrôles selon la taille sélectionnée
           if (tailles.length > 0) {
             selectTaille.addEventListener("change", () => {
+              // Réactiver les boutons uniquement si une taille est sélectionnée
+              if (selectTaille.value === "") {
+                document.getElementById("ajouter-panier").disabled = true;
+                document.getElementById("acheter-maintenant").disabled = true;
+                document.getElementById("ajouter-panier").style.opacity = "0.5";
+                document.getElementById("acheter-maintenant").style.opacity = "0.5";
+                document.getElementById("ajouter-panier").style.pointerEvents = "none";
+                document.getElementById("acheter-maintenant").style.pointerEvents = "none";
+                return;
+              } else {
+                document.getElementById("ajouter-panier").disabled = false;
+                document.getElementById("acheter-maintenant").disabled = false;
+                document.getElementById("ajouter-panier").style.opacity = "1";
+                document.getElementById("acheter-maintenant").style.opacity = "1";
+                document.getElementById("ajouter-panier").style.pointerEvents = "auto";
+                document.getElementById("acheter-maintenant").style.pointerEvents = "auto";
+              }
               const selected = selectTaille.value;
               if (produit.stock && typeof produit.stock === 'object') {
                 currentStock = produit.stock[selected] || 0;
