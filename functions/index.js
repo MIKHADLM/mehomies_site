@@ -104,9 +104,22 @@ exports.stripeWebhook = onRequest(
         const produitRef = db.collection("produits").doc(item.id);
         const doc = await produitRef.get();
         if (doc.exists) {
-          const currentStock = doc.data().stock || 0;
-          const nouveauStock = Math.max(currentStock - item.quantite, 0);
-          await produitRef.update({ stock: nouveauStock });
+          const produit = doc.data();
+
+          // Si le stock est un nombre (produit sans tailles)
+          if (typeof produit.stock === 'number') {
+            const nouveauStock = Math.max(produit.stock - item.quantite, 0);
+            await produitRef.update({ stock: nouveauStock });
+          }
+
+          // Si le stock est un objet (produit avec tailles)
+          else if (typeof produit.stock === 'object' && item.taille) {
+            const stockParTaille = produit.stock;
+            const taille = item.taille;
+            const stockActuel = stockParTaille[taille] || 0;
+            stockParTaille[taille] = Math.max(stockActuel - item.quantite, 0);
+            await produitRef.update({ stock: stockParTaille });
+          }
         }
       }
     }
