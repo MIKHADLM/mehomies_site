@@ -339,15 +339,23 @@
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
 
-          // Ajout des tailles dans le select
-          const selectTaille = document.getElementById("taille-select");
+          // Ajout des tailles dans le select ou masquage si aucune taille
           const tailles = produit.tailles || [];
-          tailles.forEach(taille => {
-            const option = document.createElement("option");
-            option.value = taille;
-            option.textContent = taille;
-            selectTaille.appendChild(option);
-          });
+          const selectTaille = document.getElementById("taille-select");
+          const labelTaille = document.querySelector("label[for='taille-select']");
+          
+          if (tailles.length > 0) {
+            tailles.forEach(taille => {
+              const option = document.createElement("option");
+              option.value = taille;
+              option.textContent = taille;
+              selectTaille.appendChild(option);
+            });
+          } else {
+            // Masquer le select et son label s'il n'y a pas de tailles
+            selectTaille.style.display = "none";
+            labelTaille.style.display = "none";
+          }
 
           // Extraction et affichage du stock
           const stock = produit.stock || 0;
