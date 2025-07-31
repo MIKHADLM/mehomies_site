@@ -246,6 +246,11 @@
       <h1 id="produit-nom">Nom</h1>
       <h2 id="produit-prix">0 €</h2>
 
+      <label for="taille-select">Taille :</label>
+      <select id="taille-select" style="margin: 0.5rem 0; padding: 0.5rem; border-radius: 5px;">
+        <option value="">Sélectionnez une taille</option>
+      </select>
+
       <div class="actions">
         <div class="quantity-control">
           <button id="moins">−</button>
@@ -334,6 +339,16 @@
           document.getElementById("produit-nom").textContent = produit.nom;
           document.getElementById("produit-prix").textContent = `${produit.prix} €`;
 
+          // Ajout des tailles dans le select
+          const selectTaille = document.getElementById("taille-select");
+          const tailles = produit.tailles || [];
+          tailles.forEach(taille => {
+            const option = document.createElement("option");
+            option.value = taille;
+            option.textContent = taille;
+            selectTaille.appendChild(option);
+          });
+
           // Extraction et affichage du stock
           const stock = produit.stock || 0;
           const stockElement = document.createElement("p");
@@ -363,8 +378,14 @@
               alert("Quantité demandée supérieure au stock disponible.");
               return;
             }
+            // Vérification taille sélectionnée
+            const selectedTaille = document.getElementById("taille-select").value;
+            if (!selectedTaille) {
+              alert("Veuillez sélectionner une taille.");
+              return;
+            }
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
-            const produitExistant = panier.find(p => p.id === produitId);
+            const produitExistant = panier.find(p => p.id === produitId && p.taille === selectedTaille);
 
             if (produitExistant) {
               produitExistant.quantite += quantite;
@@ -373,7 +394,8 @@
                 id: produitId,
                 nom: produit.nom,
                 prix: produit.prix,
-                quantite: quantite
+                quantite: quantite,
+                taille: selectedTaille
               });
             }
 
