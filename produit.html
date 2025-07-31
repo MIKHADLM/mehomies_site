@@ -357,11 +357,12 @@
             labelTaille.style.display = "none";
           }
 
-          // Extraction et affichage du stock
-          const stock = produit.stock || 0;
+          // Extraction et affichage du stock (gère le stock par taille)
+          let stock = produit.stock;
+          let currentStock = typeof stock === 'number' ? stock : 0;
           const stockElement = document.createElement("p");
           stockElement.id = "produit-stock";
-          stockElement.textContent = `${stock} en stock`;
+          stockElement.textContent = `${currentStock} en stock`;
           document.querySelector(".infos").insertBefore(stockElement, document.querySelector(".actions"));
 
           images = [produit.image];
@@ -375,20 +376,19 @@
           afficherImage(imageIndex);
 
           // Désactiver les boutons si stock = 0
-          if (stock === 0) {
+          if (currentStock === 0) {
             document.getElementById("ajouter-panier").disabled = true;
             document.getElementById("acheter-maintenant").disabled = true;
           }
 
           document.getElementById("ajouter-panier").addEventListener("click", () => {
-            // Vérification stock avant ajout au panier
-            if (quantite > stock) {
+            // Vérification stock avant ajout au panier (selon taille le cas échéant)
+            if (quantite > currentStock) {
               alert("Quantité demandée supérieure au stock disponible.");
               return;
             }
             const selectTailleElem = document.getElementById("taille-select");
             let selectedTaille = "";
-
             if (selectTailleElem && selectTailleElem.style.display !== "none") {
               selectedTaille = selectTailleElem.value;
               if (!selectedTaille) {
@@ -397,9 +397,16 @@
               }
             }
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
-            const produitExistant = panier.find(p => p.id === produitId && (!selectedTaille || p.taille === selectedTaille));
-
+            // On cherche la clé unique id+taille si applicable
+            const produitExistant = panier.find(p =>
+              p.id === produitId && (selectedTaille ? p.taille === selectedTaille : !p.taille)
+            );
             if (produitExistant) {
+              // Vérifie qu'on ne dépasse pas le stock pour cette taille
+              if ((produitExistant.quantite + quantite) > currentStock) {
+                alert("Impossible d'ajouter cette quantité, stock insuffisant pour cette taille.");
+                return;
+              }
               produitExistant.quantite += quantite;
             } else {
               panier.push({
@@ -410,25 +417,33 @@
                 ...(selectedTaille && { taille: selectedTaille })
               });
             }
-
             localStorage.setItem("panier", JSON.stringify(panier));
             if (typeof updateCartCount === 'function') updateCartCount();
-            alert(`${produit.nom} ajouté au panier (${quantite})`);
+            alert(`${produit.nom} ajouté au panier (${quantite}${selectedTaille ? ' - ' + selectedTaille : ''})`);
           });
 
           document.getElementById("acheter-maintenant").addEventListener("click", () => {
             // Vérification stock avant achat
-            if (quantite > stock) {
+            if (quantite > currentStock) {
               alert("Quantité demandée supérieure au stock disponible.");
               return;
+            }
+            const selectTailleElem = document.getElementById("taille-select");
+            let selectedTaille = "";
+            if (selectTailleElem && selectTailleElem.style.display !== "none") {
+              selectedTaille = selectTailleElem.value;
+              if (!selectedTaille) {
+                alert("Veuillez sélectionner une taille.");
+                return;
+              }
             }
             const items = [{
               id: produitId,
               nom: produit.nom,
               prix: produit.prix,
-              quantite: quantite
+              quantite: quantite,
+              ...(selectedTaille && { taille: selectedTaille })
             }];
-
             const isPickup = document.getElementById("remise-main-propre").checked;
             fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
               method: 'POST',
@@ -451,9 +466,9 @@
             });
           });
 
-          // Gestion quantité - Plus (limite au stock)
+          // Gestion quantité - Plus (limite au stock dynamique)
           document.getElementById("plus").addEventListener("click", () => {
-            if (quantite < stock) {
+            if (quantite < currentStock) {
               quantite++;
               document.getElementById("quantite").textContent = quantite;
             } else {
@@ -552,3 +567,25 @@
   </script>
 </body>
 </html>
+          // Si tailles, écouteur pour mettre à jour le stock affiché et les contrôles selon la taille sélectionnée
+          if (tailles.length > 0) {
+            selectTaille.addEventListener("change", () => {
+              const selected = selectTaille.value;
+              if (produit.stock && typeof produit.stock === 'object') {
+                currentStock = produit.stock[selected] || 0;
+              } else if (typeof produit.stock === 'number') {
+                currentStock = produit.stock;
+              } else {
+                currentStock = 0;
+              }
+              // Réinitialise la quantité si elle dépasse le nouveau stock
+              if (quantite > currentStock) {
+                quantite = currentStock > 0 ? 1 : 0;
+                document.getElementById("quantite").textContent = quantite;
+              }
+              document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+              // Désactive les boutons si plus de stock pour cette taille
+              document.getElementById("ajouter-panier").disabled = currentStock === 0;
+              document.getElementById("acheter-maintenant").disabled = currentStock === 0;
+            });
+          }
