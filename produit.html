@@ -356,9 +356,13 @@
               for (const taille of tailles) {
                 if (produit.stock[taille] > 0) {
                   selectTaille.value = taille;
-                  // Déclenche manuellement le changement pour mettre à jour le stock affiché
-                  const event = new Event('change');
-                  selectTaille.dispatchEvent(event);
+                  // Remplacement du déclenchement d'événement par la mise à jour directe de l'affichage stock et boutons
+                  const selected = taille;
+                  currentStock = produit.stock[selected] || 0;
+                  document.getElementById("quantite").textContent = quantite;
+                  document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+                  document.getElementById("ajouter-panier").disabled = currentStock === 0;
+                  document.getElementById("acheter-maintenant").disabled = currentStock === 0;
                   break;
                 }
               }
