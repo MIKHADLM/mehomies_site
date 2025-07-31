@@ -351,6 +351,28 @@
               option.textContent = taille;
               selectTaille.appendChild(option);
             });
+            // Pré-sélection automatique de la première taille disponible
+            const ordreTailles = ["S", "M", "L", "XL", "XXL"];
+            let selectedParDefaut = "";
+            for (let t of ordreTailles) {
+              if (tailles.includes(t)) {
+                const stockPourTaille = produit.stock && typeof produit.stock === 'object' ? produit.stock[t] : 0;
+                if (stockPourTaille > 0) {
+                  selectedParDefaut = t;
+                  break;
+                }
+              }
+            }
+            if (selectedParDefaut) {
+              selectTaille.value = selectedParDefaut;
+              // Met à jour le stock affiché et l'état des boutons
+              currentStock = produit.stock[selectedParDefaut] || 0;
+              document.getElementById("quantite").textContent = "1";
+              quantite = 1;
+              document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+              document.getElementById("ajouter-panier").disabled = currentStock === 0;
+              document.getElementById("acheter-maintenant").disabled = currentStock === 0;
+            }
           } else {
             // Masquer le select et son label s'il n'y a pas de tailles
             selectTaille.style.display = "none";
