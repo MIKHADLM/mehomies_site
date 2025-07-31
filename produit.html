@@ -321,6 +321,7 @@
     } else {
       const docRef = doc(db, "produits", produitId);
       getDoc(docRef).then(docSnap => {
+        let currentStock = 0;
         if (docSnap.exists()) {
           const produit = docSnap.data();
           const descriptionHTML = (produit.description || "")
@@ -359,8 +360,13 @@
                 });
                 btn.style.background = "#000";
                 btn.style.color = "#fff";
+                // Correction: recalculer currentStock selon le type de stock
                 if (produit.stock && typeof produit.stock === 'object') {
-                  currentStock = produit.stock[selectedTaille] || 0;
+                  currentStock = parseInt(produit.stock[selectedTaille]) || 0;
+                } else if (typeof produit.stock === 'number') {
+                  currentStock = produit.stock;
+                } else {
+                  currentStock = 0;
                 }
                 if (quantite > currentStock) {
                   quantite = currentStock > 0 ? 1 : 0;
@@ -374,8 +380,10 @@
             });
             // Initialiser le stock affiché avec la première taille sélectionnée
             if (produit.stock && typeof produit.stock === 'object') {
-              currentStock = produit.stock[selectedTaille] || 0;
+              currentStock = parseInt(produit.stock[selectedTaille]) || 0;
               document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+              document.getElementById("ajouter-panier").disabled = currentStock === 0;
+              document.getElementById("acheter-maintenant").disabled = currentStock === 0;
             }
           } else {
             tailleContainer.style.display = "none";
@@ -383,13 +391,17 @@
 
           // Extraction et affichage du stock (gère le stock par taille)
           let stock = produit.stock;
-          let currentStock = typeof stock === 'number' ? stock : 0;
+          if (!(tailles.length > 0 && produit.stock && typeof produit.stock === 'object')) {
+            currentStock = typeof stock === 'number' ? stock : 0;
+          }
           const stockElement = document.createElement("p");
           stockElement.id = "produit-stock";
           stockElement.textContent = `${currentStock} en stock`;
           document.querySelector(".infos").insertBefore(stockElement, document.querySelector(".actions"));
 
-          images = [produit.image];
+          // Correction image manquante
+          images = [];
+          if (produit.image) images.push(produit.image);
           if (produit.image2) images.push(produit.image2);
           if (produit.image3) images.push(produit.image3);
           if (produit.image4) images.push(produit.image4);
