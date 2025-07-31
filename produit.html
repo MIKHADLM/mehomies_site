@@ -351,6 +351,18 @@
               option.textContent = taille;
               selectTaille.appendChild(option);
             });
+            // Pré-sélectionner la première taille disponible avec stock > 0
+            if (tailles.length > 0 && typeof produit.stock === 'object') {
+              for (const taille of tailles) {
+                if (produit.stock[taille] > 0) {
+                  selectTaille.value = taille;
+                  // Déclenche manuellement le changement pour mettre à jour le stock affiché
+                  const event = new Event('change');
+                  selectTaille.dispatchEvent(event);
+                  break;
+                }
+              }
+            }
           } else {
             // Masquer le select et son label s'il n'y a pas de tailles
             selectTaille.style.display = "none";
