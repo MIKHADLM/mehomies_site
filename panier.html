@@ -386,7 +386,7 @@ function afficherPanier() {
     // Gestion du stock par taille si applicable
     let stock = 99;
     if (produitInfo.stock !== undefined) {
-      if (typeof produitInfo.stock === "object" && p.taille) {
+      if (typeof produitInfo.stock === "object" && !Array.isArray(produitInfo.stock) && p.taille) {
         stock = produitInfo.stock[p.taille] !== undefined ? produitInfo.stock[p.taille] : 0;
       } else if (typeof produitInfo.stock === "number") {
         stock = produitInfo.stock;
@@ -518,7 +518,7 @@ document.addEventListener('click', function (e) {
     const produitInfo = catalogueProduits[panier[index].id];
     let stock = 99;
     if (produitInfo && produitInfo.stock !== undefined) {
-      if (typeof produitInfo.stock === "object" && panier[index].taille) {
+      if (typeof produitInfo.stock === "object" && !Array.isArray(produitInfo.stock) && panier[index].taille) {
         stock = produitInfo.stock[panier[index].taille] !== undefined ? produitInfo.stock[panier[index].taille] : 0;
       } else if (typeof produitInfo.stock === "number") {
         stock = produitInfo.stock;
