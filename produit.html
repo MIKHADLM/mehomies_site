@@ -377,6 +377,7 @@
                 document.getElementById("acheter-maintenant").style.opacity = "0.5";
                 document.getElementById("ajouter-panier").style.pointerEvents = "none";
                 document.getElementById("acheter-maintenant").style.pointerEvents = "none";
+                document.getElementById("produit-stock").style.display = "none";
                 return;
               } else {
                 document.getElementById("ajouter-panier").disabled = false;
@@ -385,6 +386,7 @@
                 document.getElementById("acheter-maintenant").style.opacity = "1";
                 document.getElementById("ajouter-panier").style.pointerEvents = "auto";
                 document.getElementById("acheter-maintenant").style.pointerEvents = "auto";
+                document.getElementById("produit-stock").style.display = "block";
               }
               const selected = selectTaille.value;
               if (produit.stock && typeof produit.stock === 'object') {
@@ -413,6 +415,9 @@
           stockElement.id = "produit-stock";
           stockElement.textContent = `${currentStock} en stock`;
           document.querySelector(".infos").insertBefore(stockElement, document.querySelector(".actions"));
+          if (selectTaille && selectTaille.value === "") {
+            stockElement.style.display = "none";
+          }
 
           images = [produit.image];
           if (produit.image2) images.push(produit.image2);
