@@ -356,6 +356,28 @@
             selectTaille.style.display = "none";
             labelTaille.style.display = "none";
           }
+          // Si tailles, écouteur pour mettre à jour le stock affiché et les contrôles selon la taille sélectionnée
+          if (tailles.length > 0) {
+            selectTaille.addEventListener("change", () => {
+              const selected = selectTaille.value;
+              if (produit.stock && typeof produit.stock === 'object') {
+                currentStock = produit.stock[selected] || 0;
+              } else if (typeof produit.stock === 'number') {
+                currentStock = produit.stock;
+              } else {
+                currentStock = 0;
+              }
+              // Réinitialise la quantité si elle dépasse le nouveau stock
+              if (quantite > currentStock) {
+                quantite = currentStock > 0 ? 1 : 0;
+                document.getElementById("quantite").textContent = quantite;
+              }
+              document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+              // Désactive les boutons si plus de stock pour cette taille
+              document.getElementById("ajouter-panier").disabled = currentStock === 0;
+              document.getElementById("acheter-maintenant").disabled = currentStock === 0;
+            });
+          }
 
           // Extraction et affichage du stock (gère le stock par taille)
           let stock = produit.stock;
