@@ -357,14 +357,9 @@
                 if (produit.stock[taille] > 0) {
                   selectTaille.value = taille;
 
-                  currentStock = produit.stock[taille] || 0;
-                  document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
-                  document.getElementById("ajouter-panier").disabled = currentStock === 0;
-                  document.getElementById("acheter-maintenant").disabled = currentStock === 0;
-                  document.getElementById("quantite").textContent = quantite = currentStock > 0 ? 1 : 0;
-
-                  // Déclenche manuellement l'événement change pour mettre à jour le stock
-                  selectTaille.dispatchEvent(new Event('change'));
+                  // Déclenche manuellement l'événement change pour que la logique du stock se mette à jour via l'écouteur
+                  const event = new Event('change', { bubbles: true });
+                  selectTaille.dispatchEvent(event);
                   break;
                 }
               }
