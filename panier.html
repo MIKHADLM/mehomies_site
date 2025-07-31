@@ -423,7 +423,13 @@ function afficherPanier() {
     nomSpan.textContent = produitInfo.nom || p.nom;
     nomSpan.style.fontWeight = "bold";
     nomSpan.style.marginBottom = "0.25rem";
-    texteConteneur.appendChild(nomSpan);
+    // Entourer le nom avec un lien
+    const lienNom = document.createElement('a');
+    lienNom.href = `produit.html?id=${p.id}`;
+    lienNom.style.textDecoration = "none";
+    lienNom.style.color = "inherit";
+    lienNom.appendChild(nomSpan);
+    texteConteneur.appendChild(lienNom);
 
     // Ajout de la taille si elle existe
     if (p.taille) {
@@ -463,7 +469,11 @@ function afficherPanier() {
       texteConteneur.appendChild(quantityMobile);
     }
 
-    containerProduit.appendChild(img);
+    // Entourer l'image avec un lien
+    const lienProduit = document.createElement('a');
+    lienProduit.href = `produit.html?id=${p.id}`;
+    lienProduit.appendChild(img);
+    containerProduit.appendChild(lienProduit);
     containerProduit.appendChild(texteConteneur);
     tdNom.appendChild(containerProduit);
 
