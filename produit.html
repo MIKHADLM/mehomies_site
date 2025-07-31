@@ -356,6 +356,13 @@
               for (const taille of tailles) {
                 if (produit.stock[taille] > 0) {
                   selectTaille.value = taille;
+
+                  currentStock = produit.stock[taille] || 0;
+                  document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+                  document.getElementById("ajouter-panier").disabled = currentStock === 0;
+                  document.getElementById("acheter-maintenant").disabled = currentStock === 0;
+                  document.getElementById("quantite").textContent = quantite = currentStock > 0 ? 1 : 0;
+
                   // Déclenche manuellement l'événement change pour mettre à jour le stock
                   selectTaille.dispatchEvent(new Event('change'));
                   break;
