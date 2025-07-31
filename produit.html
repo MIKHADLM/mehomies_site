@@ -356,8 +356,7 @@
               for (const taille of tailles) {
                 if (produit.stock[taille] > 0) {
                   selectTaille.value = taille;
-
-                  // Ajout : met à jour immédiatement le stock affiché et l'état des boutons pour la taille sélectionnée
+                  // Met à jour explicitement tout ce qui est fait dans l'écouteur "change"
                   let currentStock;
                   if (produit.stock && typeof produit.stock === 'object') {
                     currentStock = produit.stock[taille] || 0;
@@ -366,19 +365,17 @@
                   } else {
                     currentStock = 0;
                   }
-
+                  // Réinitialise la quantité si elle dépasse le nouveau stock
                   if (quantite > currentStock) {
                     quantite = currentStock > 0 ? 1 : 0;
                     document.getElementById("quantite").textContent = quantite;
                   }
-
                   document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
+                  // Désactive les boutons si plus de stock pour cette taille
                   document.getElementById("ajouter-panier").disabled = currentStock === 0;
                   document.getElementById("acheter-maintenant").disabled = currentStock === 0;
-
-                  // Déclenche manuellement l'événement change pour que la logique du stock se mette à jour via l'écouteur
-                  const event = new Event('change', { bubbles: true });
-                  selectTaille.dispatchEvent(event);
+                  // Met à jour la variable globale currentStock pour la quantité
+                  window.currentStock = currentStock;
                   break;
                 }
               }
