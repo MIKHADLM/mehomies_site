@@ -386,14 +386,18 @@
               alert("Quantité demandée supérieure au stock disponible.");
               return;
             }
-            // Vérification taille sélectionnée
-            const selectedTaille = document.getElementById("taille-select").value;
-            if (!selectedTaille) {
-              alert("Veuillez sélectionner une taille.");
-              return;
+            const selectTailleElem = document.getElementById("taille-select");
+            let selectedTaille = "";
+
+            if (selectTailleElem && selectTailleElem.style.display !== "none") {
+              selectedTaille = selectTailleElem.value;
+              if (!selectedTaille) {
+                alert("Veuillez sélectionner une taille.");
+                return;
+              }
             }
             let panier = JSON.parse(localStorage.getItem("panier")) || [];
-            const produitExistant = panier.find(p => p.id === produitId && p.taille === selectedTaille);
+            const produitExistant = panier.find(p => p.id === produitId && (!selectedTaille || p.taille === selectedTaille));
 
             if (produitExistant) {
               produitExistant.quantite += quantite;
@@ -403,7 +407,7 @@
                 nom: produit.nom,
                 prix: produit.prix,
                 quantite: quantite,
-                taille: selectedTaille
+                ...(selectedTaille && { taille: selectedTaille })
               });
             }
 
