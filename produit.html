@@ -356,11 +356,7 @@
               for (const taille of tailles) {
                 if (produit.stock[taille] > 0) {
                   selectTaille.value = taille;
-                  // Déclenche manuellement le changement pour mettre à jour le stock affiché
-                  const event = new Event('change');
-                  selectTaille.dispatchEvent(event);
 
-                  // Ajout : Initialiser le stock et l'état des boutons pour la taille présélectionnée
                   if (produit.stock && typeof produit.stock === 'object') {
                     currentStock = produit.stock[taille] || 0;
                   } else if (typeof produit.stock === 'number') {
@@ -377,6 +373,7 @@
                   document.getElementById("produit-stock").textContent = `${currentStock} en stock`;
                   document.getElementById("ajouter-panier").disabled = currentStock === 0;
                   document.getElementById("acheter-maintenant").disabled = currentStock === 0;
+
                   break;
                 }
               }
