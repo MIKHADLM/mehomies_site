@@ -114,6 +114,10 @@
         grid-template-columns: repeat(2, 1fr);
       }
     }
+    .footer-social img {
+      width: 24px;
+      height: 24px;
+    }
   </style>
 
   <!-- Firebase SDKs -->
@@ -215,6 +219,13 @@ function activerAjoutPanier() {
         if (typeof updateCartCount === 'function') updateCartCount();
       });
   </script>
-
+  <div id="footer"></div>
+  <script>
+    fetch('footer.html')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('footer').innerHTML = data;
+      });
+  </script>
 </body>
 </html>
