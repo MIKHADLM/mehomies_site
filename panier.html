@@ -6,9 +6,17 @@
   <title>Panier - MEHOMIES</title>
   <style>
     html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
       overflow-x: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
     }
     * {
       margin: 0;
@@ -31,11 +39,15 @@
       background-color: #f9f9f9;
       color: #333;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     main {
       max-width: 1200px;
       margin: 0 auto;
+      flex: 1;
+      padding-bottom: 600px; /* Added to push the footer down */
     }
 
     #liste-panier {
@@ -625,6 +637,14 @@ boutonPayer.addEventListener('click', function (e) {
   </script>
   </main>
 
+  <div id="footer"></div>
+  <script>
+    fetch('footer.html')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('footer').innerHTML = data;
+      });
+  </script>
 </body>
 <!-- Header fetch script: ensure not duplicated -->
 <!-- (already present above, do not duplicate) -->
