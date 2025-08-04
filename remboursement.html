@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Politique de remboursement - MEHOMIES</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    main {
+      flex: 1;
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin-top: 2rem;
+    }
+
+    p {
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    a {
+      color: #000;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main>
+    <h1>Politique de remboursement</h1>
+
+    <h2>Droit de rétractation</h2>
+    <p>
+      D'après l'article L.121-20 du Code de la consommation, tout consommateur bénéficie d’un délai de 14 jours
+      pour exercer son droit de rétractation sans avoir à justifier de motifs, ni à payer de pénalités, à
+      l'exception des frais de retour.
+    </p>
+    <p>
+      Ce délai est prolongé jusqu'au premier jour ouvrable suivant, s'il expire un samedi, un dimanche ou un jour férié.
+    </p>
+    <p>
+      Les produits doivent être retournés dans leur emballage et dans leur état d'origine, accompagnés du numéro de commande.
+    </p>
+    <p>
+      L'adresse de retour vous sera communiquée suite à votre demande de remboursement.
+    </p>
+    <p>
+      Merci de nous contacter pour organiser un retour : <a href="mailto:contact@mehomies.com">contact@mehomies.com</a>
+    </p>
+
+    <h2>Garanties et service après-vente</h2>
+    <p>
+      Tous les produits en vente sur notre site bénéficient de la garantie légale de conformité (article L.211-4 du Code de la consommation),
+      permettant à l'utilisateur de renvoyer les produits livrés défectueux ou non conformes.
+    </p>
+    <p>
+      Article L.211-4 : Le vendeur est tenu de livrer un bien conforme à la commande et répond des défauts de conformité existant au moment de la livraison.
+    </p>
+    <p>
+      Pour tout produit non conforme, contactez-nous afin de trouver une solution : <a href="mailto:contact@mehomies.com">contact@mehomies.com</a>
+    </p>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    fetch('header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('header').innerHTML = html;
+        if (typeof updateCartCount === 'function') updateCartCount();
+      });
+
+    fetch('footer.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('footer').innerHTML = html;
+      });
+  </script>
+</body>
+</html>

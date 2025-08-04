@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conditions Générales de Vente - MEHOMIES</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      margin-top: 2rem;
+      font-size: 1.4rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main>
+    <h1>Conditions Générales de Vente</h1>
+
+    <h2>1. Objet</h2>
+    <p>Les présentes conditions générales de vente s’appliquent sans restriction ni réserve à l’ensemble des ventes conclues via le site www.mehomies.com exploité par Michael Philibert.</p>
+    <p>En commandant sur le Site, l’Acheteur accepte pleinement les présentes conditions générales.</p>
+
+    <h2>2. Produits</h2>
+    <p>Tous les produits en vente sur le site www.mehomies.com sont proposés dans la limite des stocks disponibles.</p>
+    <p>Les produits disponibles sur le site sont décrits et présentés avec la plus grande exactitude possible. Toutefois, si des erreurs ou omissions ont pu se produire quant à cette présentation, la responsabilité de la Société ne pourrait être engagée.</p>
+    <p>Les photographies des produits proposés peuvent subir des variations minimes (couleurs, tailles, forme). Certaines photos sont retouchées sans pour autant dénaturer le produit.</p>
+
+    <h2>3. Prix</h2>
+    <p>Les prix sont indiqués en euros TTC. Les frais de livraison sont précisés avant validation de la commande. La Société se réserve le droit de modifier les prix à tout moment.</p>
+
+    <h2>4. Commande</h2>
+    <p>L’Acheteur doit s’assurer que les coordonnées, renseignées lors de sa commande, sont correctes et qu’elles lui permettent de recevoir le message électronique de confirmation de sa commande. À défaut de réception de celui-ci, l’Acheteur doit contacter la Société.</p>
+    <p>La Société recommande à l’Acheteur de conserver les informations contenues dans la confirmation de commande.</p>
+    <p>Lors de l’envoi de la confirmation de commande, la Société s’est assurée que le produit était en stock et donc disponible en vue de sa livraison. Si jamais il existait une erreur d’inventaire rendant un produit indisponible, la vente serait annulée, l’Acheteur remboursé, la responsabilité de la Société ne pouvant pas être mise en cause.</p>
+
+    <h2>5. Paiement</h2>
+    <p>Le paiement s’effectue en ligne via Stripe. La Société n’a aucun accès à vos identifiants ou numéros de carte bancaire. Toutes les transactions sont sécurisées via Stripe.</p>
+    <p>Le paiement en plusieurs fois n’est pas admis.</p>
+
+    <h2>6. Livraison</h2>
+    <p>Les délais de livraison sont indiqués à titre informatif. La responsabilité de la Société ne saurait être engagée en cas de retard indépendant de sa volonté.</p>
+
+    <h2>7. Droit de rétractation</h2>
+    <p>Conformément à la loi, l’Acheteur dispose d’un délai de 14 jours pour se rétracter. Les retours doivent être faits dans l’emballage d’origine avec preuve d’achat.</p>
+
+    <h2>8. Service client</h2>
+    <p>Pour toute réclamation ou demande, contactez : <a href="mailto:contact@mehomies.com">contact@mehomies.com</a></p>
+
+    <h2>9. Responsabilité</h2>
+    <p>La Société n'est pas responsable des pertes ou dommages que vous pourriez subir, si des pertes ou dommages résultent d'un cas de force majeure, s'ils sont imputables au fait imprévisible d'un tiers, ou s'ils vous sont imputables.</p>
+    <p>Si l'adresse du client est erronée, la Société ne pourra être tenue responsable de la perte de la commande.</p>
+    <p>Si l'adresse mail n'est pas communiquée lors de la validation d'achat et que le colis nous est retourné par manque d'information, alors la Société ne sera pas fautive. Dans le cas où vous souhaitez tout de même récupérer la commande, alors les frais d'expédition seront à la charge de l'Acheteur.</p>
+
+    <h2>10. Informations légales</h2>
+    <p>Michael Philibert, Auto-Entreprise, 18 avenue du Général Leclerc, 62170 MONTREUIL SUR MER, France.<br>Téléphone : +33 6 95 19 76 02</p>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    fetch('header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('header').innerHTML = html;
+        if (typeof updateCartCount === 'function') updateCartCount();
+      });
+
+    fetch('footer.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('footer').innerHTML = html;
+      });
+  </script>
+</body>
+</html>
