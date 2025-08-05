@@ -321,6 +321,7 @@
     let images = [];
 
     window.afficherImage = function(index) {
+      console.log("afficherImage appelé avec index :", index);
       const imgElement = document.getElementById("produit-image");
       if (images[index]) {
         imgElement.src = images[index];
@@ -584,15 +585,17 @@
     rightZone.addEventListener("mouseenter", () => cursor.innerHTML = "&rarr;");
 
     leftZone.addEventListener("click", () => {
-      if (window.images && window.images.length > 1) {
+      if (typeof window.afficherImage === 'function' && window.images && window.images.length > 1) {
         window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
+        console.log("Image précédente :", window.imageIndex);
         window.afficherImage(window.imageIndex);
       }
     });
 
     rightZone.addEventListener("click", () => {
-      if (window.images && window.images.length > 1) {
+      if (typeof window.afficherImage === 'function' && window.images && window.images.length > 1) {
         window.imageIndex = (window.imageIndex + 1) % window.images.length;
+        console.log("Image suivante :", window.imageIndex);
         window.afficherImage(window.imageIndex);
       }
     });
