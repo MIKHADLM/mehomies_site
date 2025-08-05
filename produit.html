@@ -584,23 +584,27 @@
     leftZone.addEventListener("mouseenter", () => cursor.innerHTML = "&larr;");
     rightZone.addEventListener("mouseenter", () => cursor.innerHTML = "&rarr;");
 
-    leftZone.addEventListener("click", () => {
-      if (typeof window.afficherImage === 'function' && window.images && window.images.length > 1) {
-        const newIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
-        console.log("Image précédente :", newIndex);
-        window.imageIndex = newIndex;
-        window.afficherImage(window.imageIndex);
-      }
-    });
+leftZone.addEventListener("click", () => {
+  if (typeof window.afficherImage === 'function' && Array.isArray(window.images) && window.images.length > 1 && typeof window.imageIndex === 'number') {
+    const newIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
+    console.log("Image précédente :", newIndex);
+    window.imageIndex = newIndex;
+    window.afficherImage(window.imageIndex);
+  } else {
+    console.warn("Images ou imageIndex mal initialisés");
+  }
+});
 
-    rightZone.addEventListener("click", () => {
-      if (typeof window.afficherImage === 'function' && window.images && window.images.length > 1) {
-        const newIndex = (window.imageIndex + 1) % window.images.length;
-        console.log("Image suivante :", newIndex);
-        window.imageIndex = newIndex;
-        window.afficherImage(window.imageIndex);
-      }
-    });
+rightZone.addEventListener("click", () => {
+  if (typeof window.afficherImage === 'function' && Array.isArray(window.images) && window.images.length > 1 && typeof window.imageIndex === 'number') {
+    const newIndex = (window.imageIndex + 1) % window.images.length;
+    console.log("Image suivante :", newIndex);
+    window.imageIndex = newIndex;
+    window.afficherImage(window.imageIndex);
+  } else {
+    console.warn("Images ou imageIndex mal initialisés");
+  }
+});
     
     // Support tactile pour slider les images
     let startX = 0;
