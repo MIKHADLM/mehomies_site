@@ -586,16 +586,18 @@
 
     leftZone.addEventListener("click", () => {
       if (typeof window.afficherImage === 'function' && window.images && window.images.length > 1) {
-        window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
-        console.log("Image précédente :", window.imageIndex);
+        const newIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
+        console.log("Image précédente :", newIndex);
+        window.imageIndex = newIndex;
         window.afficherImage(window.imageIndex);
       }
     });
 
     rightZone.addEventListener("click", () => {
       if (typeof window.afficherImage === 'function' && window.images && window.images.length > 1) {
-        window.imageIndex = (window.imageIndex + 1) % window.images.length;
-        console.log("Image suivante :", window.imageIndex);
+        const newIndex = (window.imageIndex + 1) % window.images.length;
+        console.log("Image suivante :", newIndex);
+        window.imageIndex = newIndex;
         window.afficherImage(window.imageIndex);
       }
     });
@@ -615,13 +617,13 @@
       const deltaX = currentX - startX;
 
       if (Math.abs(deltaX) > 50) {
+        let newIndex;
         if (deltaX > 0) {
-          // Swipe vers la droite (image précédente)
-          window.imageIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
+          newIndex = (window.imageIndex - 1 + window.images.length) % window.images.length;
         } else {
-          // Swipe vers la gauche (image suivante)
-          window.imageIndex = (window.imageIndex + 1) % window.images.length;
+          newIndex = (window.imageIndex + 1) % window.images.length;
         }
+        window.imageIndex = newIndex;
         window.afficherImage(window.imageIndex);
         isSwiping = false;
       }
