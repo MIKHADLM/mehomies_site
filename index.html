@@ -157,13 +157,34 @@
 
       card.innerHTML = `
         <a href="produit.html?id=${doc.id}" class="product-link">
-          <img src="${produit.image}" alt="${produit.nom}" onmouseover="this.src='${produit.image2}'" onmouseout="this.src='${produit.image}'">
+          <img src="${produit.image}" alt="${produit.nom}" data-image1="${produit.image}" data-image2="${produit.image2}">
           <h4>${produit.nom}</h4>
           <p>${produit.prix} €</p>
         </a>
       `;
 
       productsContainer.appendChild(card);
+
+      // Gestion des événements d'image secondaire (desktop & mobile)
+      const img = card.querySelector('img');
+      const originalSrc = img.dataset.image1;
+      const secondSrc = img.dataset.image2;
+
+      // Hover pour desktop
+      img.addEventListener('mouseenter', () => {
+        img.src = secondSrc;
+      });
+      img.addEventListener('mouseleave', () => {
+        img.src = originalSrc;
+      });
+
+      // Touch pour mobile
+      img.addEventListener('touchstart', () => {
+        img.src = secondSrc;
+      });
+      img.addEventListener('touchend', () => {
+        img.src = originalSrc;
+      });
     });
 
     // Réactive les boutons "Ajouter au panier"
