@@ -61,4 +61,18 @@
     width: 24px;
     height: 24px;
   }
+  @media (max-width: 600px) {
+    .footer-top {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-top > div:first-child {
+      grid-column: span 1;
+      padding-left: 1rem;
+    }
+
+    .footer-top > div:nth-child(2) {
+      grid-column: span 1;
+    }
+  }
 </style>
