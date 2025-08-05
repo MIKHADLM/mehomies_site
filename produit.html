@@ -6,6 +6,26 @@
   <title>Produit - MEHOMIES</title>
   <script src="header.js" defer></script>
   <style>
+  .carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .carousel-indicators span {
+    display: block;
+    width: 10px;
+    height: 4px;
+    background-color: #ccc;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  .carousel-indicators .active {
+    width: 20px;
+    background-color: #333;
+  }
   * {
     margin: 0;
     padding: 0;
@@ -250,6 +270,7 @@
         <div class="carousel-hover-area carousel-hover-left"></div>
         <div class="carousel-hover-area carousel-hover-right"></div>
       </div>
+      <div class="carousel-indicators" id="carousel-indicators"></div>
     </div>
     <div class="infos">
       <h1 id="produit-nom">Nom</h1>
@@ -326,6 +347,11 @@
       if (images[index]) {
         imgElement.src = images[index];
         imageIndex = index;
+
+        const allIndicators = document.querySelectorAll("#carousel-indicators span");
+        allIndicators.forEach((el, idx) => {
+          el.classList.toggle("active", idx === index);
+        });
       }
     }
 
@@ -436,6 +462,15 @@
           if (produit.image5) images.push(produit.image5);
 
           window.images = images;
+
+          // Ajout des indicateurs de carrousel
+          const indicatorsContainer = document.getElementById("carousel-indicators");
+          indicatorsContainer.innerHTML = "";
+          images.forEach((_, idx) => {
+            const span = document.createElement("span");
+            if (idx === imageIndex) span.classList.add("active");
+            indicatorsContainer.appendChild(span);
+          });
 
           afficherImage(imageIndex);
           window.imageIndex = imageIndex;
