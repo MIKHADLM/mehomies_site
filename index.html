@@ -157,7 +157,7 @@
 
       card.innerHTML = `
         <a href="produit.html?id=${doc.id}" class="product-link">
-          <img src="${produit.image}" alt="${produit.nom}">
+          <img src="${produit.image}" alt="${produit.nom}" onmouseover="this.src='${produit.image2}'" onmouseout="this.src='${produit.image}'">
           <h4>${produit.nom}</h4>
           <p>${produit.prix} €</p>
         </a>
