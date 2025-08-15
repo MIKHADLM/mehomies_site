@@ -560,7 +560,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items, isPickup })
               });
-
+/*************  ✨ Windsurf Command ⭐  *************/
+            // Définir l'en-tête de CORS pour éviter les erreurs côté client
+            response.headers.set('Access-Control-Allow-Origin', '*');
+/*******  e9362817-f86f-49c5-82a2-cce29befd97f  *******/
               const data = await response.json();
               if (data.url) {
                 window.location.href = data.url;
