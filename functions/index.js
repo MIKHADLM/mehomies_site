@@ -71,6 +71,31 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
   });
 });
 
+exports.createOrder = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { items, isPickup } = req.body;
+
+      if (!items || !Array.isArray(items)) {
+        return res.status(400).json({ error: "Items must be an array" });
+      }
+
+      // Create a new order in Firestore with status "pending"
+      const orderRef = await db.collection("orders").add({
+        items,
+        isPickup,
+        status: "pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      res.status(200).json({ orderId: orderRef.id });
+    } catch (error) {
+      console.error("Erreur lors de la création de la commande :", error);
+      res.status(500).json({ error: "Erreur lors de la création de la commande" });
+    }
+  });
+});
+
 exports.stripeWebhook = onRequest(
   {
     memory: "256MB",

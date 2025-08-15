@@ -526,18 +526,7 @@
 
 
 
-          // Fonction pour créer une commande pending
-          async function creerCommandePending(items, isPickup) {
-            const ordersRef = collection(db, "orders");
-            const docRef = await addDoc(ordersRef, {
-              status: "pending",
-              items,
-              isPickup: !!isPickup,
-              createdAt: serverTimestamp()
-            });
-            return docRef.id;
-          }
-
+          // Nouvelle logique : appel de la Cloud Function 'createOrder' pour créer la commande côté serveur
           document.getElementById("acheter-maintenant").addEventListener("click", async () => {
             if (quantite > currentStock) {
               alert("Quantité demandée supérieure au stock disponible.");
@@ -565,14 +554,11 @@
             const isPickup = document.getElementById("remise-main-propre").checked;
 
             try {
-              // Création de la commande pending dans Firestore
-              const orderId = await creerCommandePending(items, isPickup);
-
-              // Envoi à Stripe Checkout
-              const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+              // Appel de la Cloud Function createOrder (qui crée la commande et retourne l'URL Stripe Checkout)
+              const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createOrder', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ items, isPickup, orderId })
+                body: JSON.stringify({ items, isPickup })
               });
 
               const data = await response.json();
@@ -582,7 +568,7 @@
                 alert("Erreur : aucun lien de paiement reçu.");
               }
             } catch (error) {
-              console.error('Erreur Stripe ou Firestore :', error);
+              console.error('Erreur lors de la création de la commande ou du paiement :', error);
               alert("Une erreur est survenue lors de la création du paiement.");
             }
           });
