@@ -318,8 +318,8 @@
   <!-- Firebase + logique produit -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
@@ -526,7 +526,8 @@
 
 
 
-          // Nouvelle logique : appel de la Cloud Function 'createOrder' pour créer la commande côté serveur
+          // Nouvelle logique : appel de la Cloud Function 'createCheckoutSession'
+          // qui crée la commande Firestore (pending) + la session Stripe et renvoie l'URL
           document.getElementById("acheter-maintenant").addEventListener("click", async () => {
             if (quantite > currentStock) {
               alert("Quantité demandée supérieure au stock disponible.");
@@ -554,16 +555,11 @@
             const isPickup = document.getElementById("remise-main-propre").checked;
 
             try {
-              // Appel de la Cloud Function createOrder (qui crée la commande et retourne l'URL Stripe Checkout)
-              const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createOrder', {
+              const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items, isPickup })
               });
-/*************  ✨ Windsurf Command ⭐  *************/
-            // Définir l'en-tête de CORS pour éviter les erreurs côté client
-            response.headers.set('Access-Control-Allow-Origin', '*');
-/*******  e9362817-f86f-49c5-82a2-cce29befd97f  *******/
               const data = await response.json();
               if (data.url) {
                 window.location.href = data.url;
