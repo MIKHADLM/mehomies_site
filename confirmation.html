@@ -1,0 +1,61 @@
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmation - MEHOMIES</title>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f9f9f9; }
+    .confirmation { text-align: center; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { color: #333; }
+    p { font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <div class="confirmation">
+    <h1>Merci pour votre commande !</h1>
+    <p id="order-number">Chargement du numéro de commande...</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
+      authDomain: "mehomiesstore.firebaseapp.com",
+      projectId: "mehomiesstore",
+      storageBucket: "mehomiesstore.firebasestorage.app",
+      messagingSenderId: "109137836087",
+      appId: "1:109137836087:web:b3a0ea342f8028595e27b2",
+      measurementId: "G-JG06M8XR7F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Récupérer order_id depuis l'URL
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order_id');
+
+    if (!orderId) {
+      document.getElementById('order-number').textContent = 'Aucun numéro de commande trouvé.';
+    } else {
+      const orderRef = doc(db, 'orders', orderId);
+      getDoc(orderRef).then(docSnap => {
+        if (docSnap.exists()) {
+          const order = docSnap.data();
+          document.getElementById('order-number').textContent = `Votre numéro de commande : ${order.numeroCommande || orderId}`;
+        } else {
+          document.getElementById('order-number').textContent = 'Commande introuvable.';
+        }
+      }).catch(err => {
+        console.error('Erreur Firestore:', err);
+        document.getElementById('order-number').textContent = 'Erreur lors de la récupération de la commande.';
+      });
+    }
+  </script>
+</body>
+</html>

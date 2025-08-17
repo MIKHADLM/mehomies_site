@@ -140,6 +140,29 @@ exports.stripeWebhook = onRequest(
           stripeSessionId: session.id
         });
         console.log("Commande mise à jour à paid :", metadata.orderId);
+
+        // Gestion du numéro de commande automatique
+        const currentYear = new Date().getFullYear().toString();
+        const counterRef = db.collection("Counter").doc("Orders");
+        await db.runTransaction(async (transaction) => {
+          const counterDoc = await transaction.get(counterRef);
+          let sequences = 0;
+          let yearStored = currentYear;
+          if (counterDoc.exists) {
+            const data = counterDoc.data();
+            sequences = data.Sequences || 0;
+            yearStored = data.Year || currentYear;
+          }
+          if (yearStored !== currentYear) {
+            sequences = 0;
+            yearStored = currentYear;
+          }
+          sequences += 1;
+          const orderNumber = `MEH-${currentYear}-${sequences.toString().padStart(3, '0')}`;
+
+          transaction.set(counterRef, { Year: yearStored, Sequences: sequences }, { merge: true });
+          transaction.update(orderRef, { orderNumber });
+        });
       }
     }
 
