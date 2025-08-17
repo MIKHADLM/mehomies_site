@@ -141,25 +141,32 @@ exports.stripeWebhook = onRequest(
         });
         console.log("Commande mise à jour à paid :", metadata.orderId);
 
-        // Gestion du numéro de commande automatique
+        // Gestion du numéro de commande automatique (version corrigée)
         const currentYear = new Date().getFullYear().toString();
         const counterRef = db.collection("Counter").doc("Orders");
+
         await db.runTransaction(async (transaction) => {
           const counterDoc = await transaction.get(counterRef);
           let sequences = 0;
           let yearStored = currentYear;
+
           if (counterDoc.exists) {
             const data = counterDoc.data();
+            // Assurez-vous que les noms de champs correspondent exactement à votre Firestore
             sequences = data.Sequences || 0;
             yearStored = data.Year || currentYear;
           }
+
+          // Si l'année a changé, on remet la séquence à zéro
           if (yearStored !== currentYear) {
             sequences = 0;
             yearStored = currentYear;
           }
+
           sequences += 1;
           const orderNumber = `MEH-${currentYear}-${sequences.toString().padStart(3, '0')}`;
 
+          // Mettre à jour le compteur et la commande
           transaction.set(counterRef, { Year: yearStored, Sequences: sequences }, { merge: true });
           transaction.update(orderRef, { orderNumber });
         });
