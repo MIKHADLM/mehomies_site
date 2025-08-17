@@ -560,15 +560,29 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items, isPickup })
               });
-              const data = await response.json();
+
+              if (!response.ok) {
+                const errorText = await response.text().catch(() => '');
+                console.error('createCheckoutSession HTTP error:', response.status, errorText);
+                alert(`Erreur serveur (${response.status}). Détails dans la console.`);
+                return;
+              }
+
+              const data = await response.json().catch(() => ({}));
+              console.log('createCheckoutSession data:', data);
+
+              if (data.orderId) {
+                try { localStorage.setItem('lastOrderId', data.orderId); } catch {}
+              }
+
               if (data.url) {
                 window.location.href = data.url;
               } else {
-                alert("Erreur : aucun lien de paiement reçu.");
+                alert("Erreur : aucun lien de paiement reçu (pas d'URL). Voir console.");
               }
             } catch (error) {
-              console.error('Erreur lors de la création de la commande ou du paiement :', error);
-              alert("Une erreur est survenue lors de la création du paiement.");
+              console.error('Erreur lors de la création du paiement :', error);
+              alert("Une erreur est survenue lors de la création du paiement (voir console).");
             }
           });
 
