@@ -137,7 +137,12 @@ exports.stripeWebhook = onRequest(
         await orderRef.update({
           status: "paid",
           paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
-          stripeSessionId: session.id
+          stripeSessionId: session.id,
+          customerEmail: session.customer_email || null,
+          phoneNumber: session.phone_number || null,
+          shipping: session.shipping || null,
+          billing: session.billing_address || null,
+          customerName: session.customer_details ? session.customer_details.name : null
         });
         console.log("Commande mise à jour à paid :", metadata.orderId);
 
