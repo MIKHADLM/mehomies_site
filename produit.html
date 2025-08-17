@@ -528,9 +528,12 @@
 
           // Nouvelle logique : appel de la Cloud Function 'createCheckoutSession'
           // qui crée la commande Firestore (pending) + la session Stripe et renvoie l'URL
+          // Debug-logging version of Acheter Maintenant (Stripe)
           document.getElementById("acheter-maintenant").addEventListener("click", async () => {
+            console.log("[DEBUG] Acheter maintenant button clicked");
             if (quantite > currentStock) {
               alert("Quantité demandée supérieure au stock disponible.");
+              console.log("[DEBUG] Quantité supérieure au stock, currentStock:", currentStock, "quantite:", quantite);
               return;
             }
 
@@ -540,6 +543,7 @@
               selectedTaille = selectTailleElem.value;
               if (!selectedTaille) {
                 alert("Veuillez sélectionner une taille.");
+                console.log("[DEBUG] Aucune taille sélectionnée");
                 return;
               }
             }
@@ -551,8 +555,10 @@
               quantite: quantite,
               ...(selectedTaille && { taille: selectedTaille })
             }];
+            console.log("[DEBUG] Items to purchase:", items);
 
             const isPickup = document.getElementById("remise-main-propre").checked;
+            console.log("[DEBUG] isPickup:", isPickup);
 
             try {
               const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
@@ -560,29 +566,26 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items, isPickup })
               });
-
-              if (!response.ok) {
-                const errorText = await response.text().catch(() => '');
-                console.error('createCheckoutSession HTTP error:', response.status, errorText);
-                alert(`Erreur serveur (${response.status}). Détails dans la console.`);
+              console.log("[DEBUG] Cloud Function response status:", response.status);
+              let data;
+              try {
+                data = await response.json();
+                console.log("[DEBUG] Cloud Function response JSON:", data);
+              } catch (jsonErr) {
+                console.error("[DEBUG] Failed to parse JSON from response", jsonErr);
+                alert("Erreur technique lors du paiement.");
                 return;
               }
-
-              const data = await response.json().catch(() => ({}));
-              console.log('createCheckoutSession data:', data);
-
-              if (data.orderId) {
-                try { localStorage.setItem('lastOrderId', data.orderId); } catch {}
-              }
-
               if (data.url) {
+                console.log("[DEBUG] Redirecting to Stripe URL:", data.url, "orderId:", data.orderId, "sessionId:", data.sessionId);
                 window.location.href = data.url;
               } else {
-                alert("Erreur : aucun lien de paiement reçu (pas d'URL). Voir console.");
+                alert("Erreur : aucun lien de paiement reçu.");
+                console.error("[DEBUG] No URL in response:", data);
               }
             } catch (error) {
-              console.error('Erreur lors de la création du paiement :', error);
-              alert("Une erreur est survenue lors de la création du paiement (voir console).");
+              console.error('[DEBUG] Erreur lors de la création de la commande ou du paiement :', error);
+              alert("Une erreur est survenue lors de la création du paiement.");
             }
           });
 
