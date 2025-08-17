@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Confirmation - MEHOMIES</title>
   <style>
-    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f9f9f9; }
-    .confirmation { text-align: center; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { color: #333; }
-    p { font-size: 1.2rem; }
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f9f9f9; margin:0; }
+    .confirmation { text-align: center; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.15); max-width: 400px; width: 90%; }
+    h1 { color: #333; font-size: 1.8rem; margin-bottom: 1rem; }
+    p { font-size: 1.2rem; margin: 0.5rem 0; word-wrap: break-word; }
+    .error { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -36,25 +35,28 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Récupérer order_id depuis l'URL
     const params = new URLSearchParams(window.location.search);
     const orderId = params.get('order_id');
 
+    const orderNumberEl = document.getElementById('order-number');
+
     if (!orderId) {
-      document.getElementById('order-number').textContent = 'Aucun numéro de commande trouvé.';
+      orderNumberEl.innerHTML = '<span class="error">Aucun numéro de commande trouvé dans l’URL.</span>';
     } else {
       const orderRef = doc(db, 'orders', orderId);
-      getDoc(orderRef).then(docSnap => {
-        if (docSnap.exists()) {
-          const order = docSnap.data();
-          document.getElementById('order-number').textContent = `Votre numéro de commande : ${order.numeroCommande || orderId}`;
-        } else {
-          document.getElementById('order-number').textContent = 'Commande introuvable.';
-        }
-      }).catch(err => {
-        console.error('Erreur Firestore:', err);
-        document.getElementById('order-number').textContent = 'Erreur lors de la récupération de la commande.';
-      });
+      getDoc(orderRef)
+        .then(docSnap => {
+          if (docSnap.exists()) {
+            const order = docSnap.data();
+            orderNumberEl.textContent = `Votre numéro de commande : ${order.numeroCommande || orderId}`;
+          } else {
+            orderNumberEl.innerHTML = '<span class="error">Commande introuvable.</span>';
+          }
+        })
+        .catch(err => {
+          console.error('Erreur Firestore:', err);
+          orderNumberEl.innerHTML = '<span class="error">Erreur lors de la récupération de la commande.</span>';
+        });
     }
   </script>
 </body>
