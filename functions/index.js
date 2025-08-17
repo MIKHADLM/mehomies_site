@@ -59,7 +59,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
         payment_method_types: ['card'],
         line_items: lineItems,
         mode: 'payment',
-        success_url: 'https://www.mehomies.com/confirmation.html',
+        success_url: `${req.headers.origin}/confirmation.html?order_id=${orderRef.id}`,
         cancel_url: 'https://www.mehomies.com/panier.html',
         billing_address_collection: 'required', // always collect billing address
         phone_number_collection: {

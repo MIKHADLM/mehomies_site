@@ -5,22 +5,121 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Confirmation - MEHOMIES</title>
   <style>
-    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f9f9f9; margin:0; }
-    .confirmation { text-align: center; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.15); max-width: 400px; width: 90%; }
-    h1 { color: #333; font-size: 1.8rem; margin-bottom: 1rem; }
-    p { font-size: 1.2rem; margin: 0.5rem 0; word-wrap: break-word; }
-    .error { color: red; font-weight: bold; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body { 
+      font-family: Arial, sans-serif; 
+      display: flex; 
+      flex-direction: column; 
+      background-color: #f9f9f9;
+    }
+    
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      padding: 2rem 1rem;
+    }
+    
+    .confirmation { 
+      text-align: center; 
+      background: white; 
+      padding: 2rem; 
+      border-radius: 10px; 
+      box-shadow: 0 0 15px rgba(0,0,0,0.15); 
+      max-width: 500px; 
+      width: 90%; 
+    }
+    
+    h1 { 
+      color: #333; 
+      font-size: 1.8rem; 
+      margin-bottom: 1rem; 
+    }
+    
+    p { 
+      font-size: 1.2rem; 
+      margin: 0.5rem 0; 
+      word-wrap: break-word; 
+    }
+    
+    .error { 
+      color: red; 
+      font-weight: bold; 
+    }
+    
+    .success {
+      color: #28a745;
+      font-weight: bold;
+    }
+    
+    .loading {
+      color: #6c757d;
+      font-style: italic;
+    }
+    
+    .btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background: #000;
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    
+    .btn:hover {
+      background: #333;
+    }
   </style>
 </head>
 <body>
-  <div class="confirmation">
-    <h1>Merci pour votre commande !</h1>
-    <p id="order-number">Chargement du numéro de commande...</p>
-  </div>
+  <div id="header"></div>
 
+  <main>
+    <div class="confirmation">
+      <h1>Merci pour votre commande !</h1>
+      <p id="order-number" class="loading">Chargement du numéro de commande...</p>
+      <a href="index.html" class="btn">Continuer mes achats</a>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <!-- Scripts pour charger header et footer -->
+  <script>
+    // Charger le header
+    fetch('header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('header').innerHTML = html;
+        if (typeof updateCartCount === 'function') updateCartCount();
+      })
+      .catch(err => console.error('Erreur chargement header:', err));
+
+    // Charger le footer
+    fetch('footer.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('footer').innerHTML = html;
+      })
+      .catch(err => console.error('Erreur chargement footer:', err));
+  </script>
+
+  <!-- Script Firebase avec gestion d'erreurs améliorée -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    console.log('[DEBUG] Initialisation de la page confirmation');
 
     const firebaseConfig = {
       apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
@@ -32,31 +131,60 @@
       measurementId: "G-JG06M8XR7F"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      console.log('[DEBUG] Firebase initialisé avec succès');
 
-    const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('order_id');
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('order_id');
+      
+      console.log('[DEBUG] URL complète:', window.location.href);
+      console.log('[DEBUG] Paramètres URL:', params.toString());
+      console.log('[DEBUG] Order ID extrait:', orderId);
 
-    const orderNumberEl = document.getElementById('order-number');
+      const orderNumberEl = document.getElementById('order-number');
 
-    if (!orderId) {
-      orderNumberEl.innerHTML = '<span class="error">Aucun numéro de commande trouvé dans l’URL.</span>';
-    } else {
-      const orderRef = doc(db, 'orders', orderId);
-      getDoc(orderRef)
-        .then(docSnap => {
-          if (docSnap.exists()) {
-            const order = docSnap.data();
-            orderNumberEl.textContent = `Votre numéro de commande : ${order.numeroCommande || orderId}`;
-          } else {
-            orderNumberEl.innerHTML = '<span class="error">Commande introuvable.</span>';
-          }
-        })
-        .catch(err => {
-          console.error('Erreur Firestore:', err);
-          orderNumberEl.innerHTML = '<span class="error">Erreur lors de la récupération de la commande.</span>';
-        });
+      if (!orderId) {
+        console.error('[DEBUG] Aucun order_id trouvé dans l\'URL');
+        orderNumberEl.innerHTML = '<span class="error">Aucun numéro de commande trouvé dans l\'URL.</span>';
+      } else {
+        console.log('[DEBUG] Tentative de récupération de la commande:', orderId);
+        
+        const orderRef = doc(db, 'orders', orderId);
+        
+        getDoc(orderRef)
+          .then(docSnap => {
+            console.log('[DEBUG] Réponse Firestore reçue');
+            
+            if (docSnap.exists()) {
+              const order = docSnap.data();
+              console.log('[DEBUG] Données de la commande:', order);
+              
+              const numeroCommande = order.numeroCommande || orderId;
+              orderNumberEl.innerHTML = `<span class="success">Votre numéro de commande : ${numeroCommande}</span>`;
+              
+              // Vider le panier après confirmation
+              localStorage.removeItem('panier');
+              if (typeof updateCartCount === 'function') {
+                updateCartCount();
+              }
+              
+              console.log('[DEBUG] Commande affichée avec succès');
+            } else {
+              console.error('[DEBUG] Document de commande non trouvé dans Firestore');
+              orderNumberEl.innerHTML = '<span class="error">Commande introuvable dans notre système.</span>';
+            }
+          })
+          .catch(err => {
+            console.error('[DEBUG] Erreur lors de la récupération Firestore:', err);
+            orderNumberEl.innerHTML = `<span class="error">Erreur lors de la récupération de la commande: ${err.message}</span>`;
+          });
+      }
+    } catch (error) {
+      console.error('[DEBUG] Erreur lors de l\'initialisation Firebase:', error);
+      const orderNumberEl = document.getElementById('order-number');
+      orderNumberEl.innerHTML = `<span class="error">Erreur technique: ${error.message}</span>`;
     }
   </script>
 </body>
