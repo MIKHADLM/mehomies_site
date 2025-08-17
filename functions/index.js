@@ -134,15 +134,22 @@ exports.stripeWebhook = onRequest(
       // Mise à jour du statut de la commande en "paid"
       if (metadata.orderId) {
         const orderRef = db.collection("orders").doc(metadata.orderId);
+
+        // Récupération des informations client et adresses
+        const customerDetails = session.customer_details || {};
+        const shipping = session.shipping || {};
+        const shippingAddress = shipping.address || null;
+        const billingAddress = session.billing_address || null;
+
         await orderRef.update({
           status: "paid",
           paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
           stripeSessionId: session.id,
-          customerEmail: session.customer_email || null,
-          phoneNumber: session.phone_number || null,
-          shipping: session.shipping || null,
-          billing: session.billing_address || null,
-          customerName: session.customer_details ? session.customer_details.name : null
+          customerEmail: customerDetails.email || null,
+          phoneNumber: customerDetails.phone || null,
+          shippingAddress: shippingAddress,
+          billingAddress: billingAddress,
+          customerName: customerDetails.name || null
         });
         console.log("Commande mise à jour à paid :", metadata.orderId);
 
