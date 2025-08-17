@@ -324,6 +324,7 @@
         <span class="label">Sous-total :</span>
         <span class="amount" id="total">0€</span>
       </div>
+      <input type="email" id="email-client" placeholder="Votre email" required style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #ccc;">
       <label class="pickup-option">
         <input type="checkbox" id="remise-main-propre" />
         Remise en main propre (Sur Lille 59000 seulement)
@@ -607,31 +608,36 @@ chargerCatalogue().then(() => {
 });
 
 const boutonPayer = document.getElementById('finaliser-commande');
-boutonPayer.addEventListener('click', function (e) {
+boutonPayer.addEventListener('click', async function (e) {
   e.preventDefault();
 
   const panier = JSON.parse(localStorage.getItem('panier')) || [];
   const remiseMainPropre = document.getElementById('remise-main-propre').checked;
 
-  fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ items: panier, isPickup: remiseMainPropre })
-  })
-  .then(res => res.json())
-  .then(data => {
+  // Récupérer l'email du client si présent dans un champ input (à ajouter sur la page si nécessaire)
+  const emailInput = document.getElementById('email-client');
+  const email = emailInput ? emailInput.value : '';
+
+  try {
+    // Création de la commande en pending et de la session Stripe via Cloud Function
+    const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: panier, isPickup: remiseMainPropre, email })
+    });
+
+    const data = await response.json();
+
     if (data.url) {
-      window.location.href = data.url;  // redirection vers Stripe Checkout
+      // Redirection vers Stripe Checkout
+      window.location.href = data.url;
     } else {
       alert("Erreur : aucun lien de paiement reçu.");
     }
-  })
-  .catch(error => {
+  } catch (error) {
     console.error('Erreur Stripe :', error);
     alert("Une erreur est survenue lors de la création du paiement.");
-  });
+  }
 });
 
   </script>
