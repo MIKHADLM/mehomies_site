@@ -175,3 +175,34 @@ exports.stripeWebhook = onRequest(
 
     res.status(200).send("OK");
   });
+
+
+exports.getOrderDetails = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const orderId = req.query.orderId;
+
+      if (!orderId) {
+        return res.status(400).json({ error: "orderId manquant" });
+      }
+
+      const orderRef = db.collection("orders").doc(orderId);
+      const orderSnap = await orderRef.get();
+
+      if (!orderSnap.exists) {
+        return res.status(404).json({ error: "Commande introuvable" });
+      }
+
+      const orderData = orderSnap.data();
+
+      // Retourner uniquement les informations sécurisées
+      return res.status(200).json({
+        numeroCommande: orderData.orderNumber,
+        status: orderData.status
+      });
+    } catch (error) {
+      console.error("Erreur getOrderDetails:", error);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+});

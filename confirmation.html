@@ -116,76 +116,37 @@
 
   <!-- Script Firebase avec gestion d'erreurs améliorée -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  console.log('[DEBUG] Initialisation de la page confirmation via Cloud Function');
 
-    console.log('[DEBUG] Initialisation de la page confirmation');
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order_id');
+  const orderNumberEl = document.getElementById('order-number');
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
-      authDomain: "mehomiesstore.firebaseapp.com",
-      projectId: "mehomiesstore",
-      storageBucket: "mehomiesstore.firebasestorage.app",
-      messagingSenderId: "109137836087",
-      appId: "1:109137836087:web:b3a0ea342f8028595e27b2",
-      measurementId: "G-JG06M8XR7F"
-    };
+  if (!orderId) {
+    console.error('[DEBUG] Aucun order_id trouvé dans l\'URL');
+    orderNumberEl.innerHTML = '<span class="error">Aucun numéro de commande trouvé dans l\'URL.</span>';
+  } else {
+    console.log('[DEBUG] Tentative de récupération de la commande via Cloud Function:', orderId);
 
-    try {
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      console.log('[DEBUG] Firebase initialisé avec succès');
-
-      const params = new URLSearchParams(window.location.search);
-      const orderId = params.get('order_id');
-      
-      console.log('[DEBUG] URL complète:', window.location.href);
-      console.log('[DEBUG] Paramètres URL:', params.toString());
-      console.log('[DEBUG] Order ID extrait:', orderId);
-
-      const orderNumberEl = document.getElementById('order-number');
-
-      if (!orderId) {
-        console.error('[DEBUG] Aucun order_id trouvé dans l\'URL');
-        orderNumberEl.innerHTML = '<span class="error">Aucun numéro de commande trouvé dans l\'URL.</span>';
-      } else {
-        console.log('[DEBUG] Tentative de récupération de la commande:', orderId);
-        
-        const orderRef = doc(db, 'orders', orderId);
-        
-        getDoc(orderRef)
-          .then(docSnap => {
-            console.log('[DEBUG] Réponse Firestore reçue');
-            
-            if (docSnap.exists()) {
-              const order = docSnap.data();
-              console.log('[DEBUG] Données de la commande:', order);
-              
-              const numeroCommande = order.numeroCommande || orderId;
-              orderNumberEl.innerHTML = `<span class="success">Votre numéro de commande : ${numeroCommande}</span>`;
-              
-              // Vider le panier après confirmation
-              localStorage.removeItem('panier');
-              if (typeof updateCartCount === 'function') {
-                updateCartCount();
-              }
-              
-              console.log('[DEBUG] Commande affichée avec succès');
-            } else {
-              console.error('[DEBUG] Document de commande non trouvé dans Firestore');
-              orderNumberEl.innerHTML = '<span class="error">Commande introuvable dans notre système.</span>';
-            }
-          })
-          .catch(err => {
-            console.error('[DEBUG] Erreur lors de la récupération Firestore:', err);
-            orderNumberEl.innerHTML = `<span class="error">Erreur lors de la récupération de la commande: ${err.message}</span>`;
-          });
-      }
-    } catch (error) {
-      console.error('[DEBUG] Erreur lors de l\'initialisation Firebase:', error);
-      const orderNumberEl = document.getElementById('order-number');
-      orderNumberEl.innerHTML = `<span class="error">Erreur technique: ${error.message}</span>`;
-    }
-  </script>
+    fetch(`https://europe-west1-mehomiesstore.cloudfunctions.net/getOrderDetails?orderId=${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.numeroCommande) {
+          orderNumberEl.innerHTML = `<span class="success">Votre numéro de commande : ${data.numeroCommande}</span>`;
+          // Vider le panier après confirmation
+          localStorage.removeItem('panier');
+          if (typeof updateCartCount === 'function') updateCartCount();
+          console.log('[DEBUG] Commande affichée avec succès via Cloud Function');
+        } else {
+          orderNumberEl.innerHTML = `<span class="error">${data.error || 'Commande introuvable.'}</span>`;
+          console.error('[DEBUG] Erreur renvoyée par la Cloud Function:', data.error);
+        }
+      })
+      .catch(err => {
+        console.error('[DEBUG] Erreur lors de l\'appel à getOrderDetails:', err);
+        orderNumberEl.innerHTML = `<span class="error">Erreur lors de la récupération de la commande.</span>`;
+      });
+  }
+</script>
 </body>
 </html>
