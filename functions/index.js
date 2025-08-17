@@ -111,20 +111,17 @@ exports.stripeWebhook = onRequest(
       const metadata = session.metadata;
       const panier = JSON.parse(metadata.panier || "[]");
 
+      // Mise à jour du stock pour chaque produit
       for (const item of panier) {
         const produitRef = db.collection("produits").doc(item.id);
         const doc = await produitRef.get();
         if (doc.exists) {
           const produit = doc.data();
 
-          // Si le stock est un nombre (produit sans tailles)
           if (typeof produit.stock === 'number') {
             const nouveauStock = Math.max(produit.stock - item.quantite, 0);
             await produitRef.update({ stock: nouveauStock });
-          }
-
-          // Si le stock est un objet (produit avec tailles)
-          else if (typeof produit.stock === 'object' && item.taille) {
+          } else if (typeof produit.stock === 'object' && item.taille) {
             const stockParTaille = produit.stock;
             const taille = item.taille;
             const stockActuel = stockParTaille[taille] || 0;
@@ -132,6 +129,17 @@ exports.stripeWebhook = onRequest(
             await produitRef.update({ stock: stockParTaille });
           }
         }
+      }
+
+      // Mise à jour du statut de la commande en "paid"
+      if (metadata.orderId) {
+        const orderRef = db.collection("orders").doc(metadata.orderId);
+        await orderRef.update({
+          status: "paid",
+          paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+          stripeSessionId: session.id
+        });
+        console.log("Commande mise à jour à paid :", metadata.orderId);
       }
     }
 
