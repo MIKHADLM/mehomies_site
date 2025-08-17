@@ -19,6 +19,14 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
       const items = req.body.items;
       const isPickup = req.body.isPickup; // boolean indicating if "remise en main propre" is checked
 
+      // Create a new order in Firestore with status "pending"
+      const orderRef = await db.collection("orders").add({
+        items,
+        isPickup,
+        status: "pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
       const lineItems = items.map(item => ({
         price_data: {
           currency: 'eur',
@@ -45,7 +53,8 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
       const session = await stripe.checkout.sessions.create({
         metadata: {
           panier: JSON.stringify(items),
-          isPickup: String(isPickup)
+          isPickup: String(isPickup),
+          orderId: orderRef.id
         },
         payment_method_types: ['card'],
         line_items: lineItems,
@@ -62,37 +71,14 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
         customer_email: req.body.email,
       });
 
-      res.status(200).json({ url: session.url });
+      await orderRef.update({ stripeSessionId: session.id });
+
+      res.status(200).json({ url: session.url, orderId: orderRef.id });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Erreur lors de la création de la session Stripe' });
     }
     
-  });
-});
-
-exports.createOrder = onRequest({ region: 'europe-west1' }, async (req, res) => {
-  cors(req, res, async () => {
-    try {
-      const { items, isPickup } = req.body;
-
-      if (!items || !Array.isArray(items)) {
-        return res.status(400).json({ error: "Items must be an array" });
-      }
-
-      // Create a new order in Firestore with status "pending"
-      const orderRef = await db.collection("orders").add({
-        items,
-        isPickup,
-        status: "pending",
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      res.status(200).json({ orderId: orderRef.id });
-    } catch (error) {
-      console.error("Erreur lors de la création de la commande :", error);
-      res.status(500).json({ error: "Erreur lors de la création de la commande" });
-    }
   });
 });
 
