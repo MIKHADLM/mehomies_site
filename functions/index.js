@@ -108,6 +108,23 @@ exports.stripeWebhook = onRequest(
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
+
+      console.log('=== DEBUT DEBUG SESSION STRIPE ===');
+      console.log('Session ID:', session.id);
+      console.log('Session mode:', session.mode);
+      console.log('Payment status:', session.payment_status);
+      console.log('Customer Details:', JSON.stringify(session.customer_details, null, 2));
+      console.log('Shipping:', JSON.stringify(session.shipping, null, 2));
+      console.log('Customer Details Address:', JSON.stringify(session.customer_details?.address, null, 2));
+      console.log('Metadata:', JSON.stringify(session.metadata, null, 2));
+      console.log('Toutes les clés de session:', Object.keys(session));
+      console.log('Checks:');
+      console.log('- session.shipping existe:', !!session.shipping);
+      console.log('- session.shipping.address existe:', !!session.shipping?.address);
+      console.log('- session.customer_details existe:', !!session.customer_details);
+      console.log('- session.customer_details.address existe:', !!session.customer_details?.address);
+      console.log('=== FIN DEBUG SESSION STRIPE ===');
+
       const metadata = session.metadata;
       const panier = JSON.parse(metadata.panier || "[]");
 
@@ -131,26 +148,55 @@ exports.stripeWebhook = onRequest(
         }
       }
 
+      const shippingAddress = session.shipping?.address ? {
+        line1: session.shipping.address.line1 || '',
+        line2: session.shipping.address.line2 || '',
+        city: session.shipping.address.city || '',
+        postal_code: session.shipping.address.postal_code || '',
+        country: session.shipping.address.country || '',
+        state: session.shipping.address.state || ''
+      } : null;
+
+      const billingAddress = session.customer_details?.address ? {
+        line1: session.customer_details.address.line1 || '',
+        line2: session.customer_details.address.line2 || '',
+        city: session.customer_details.address.city || '',
+        postal_code: session.customer_details.address.postal_code || '',
+        country: session.customer_details.address.country || '',
+        state: session.customer_details.address.state || ''
+      } : null;
+
       // Mise à jour du statut de la commande en "paid"
       if (metadata.orderId) {
         const orderRef = db.collection("orders").doc(metadata.orderId);
 
-        // Récupération des informations client et adresses
+        // Récupération des informations client
         const customerDetails = session.customer_details || {};
-        const shipping = session.shipping || {};
-        const shippingAddress = shipping.address || null;
-        const billingAddress = session.billing_address || null;
 
-        await orderRef.update({
+        const updateData = {
           status: "paid",
           paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
           stripeSessionId: session.id,
           customerEmail: customerDetails.email || null,
           phoneNumber: customerDetails.phone || null,
-          shippingAddress: shippingAddress,
-          billingAddress: billingAddress,
           customerName: customerDetails.name || null
-        });
+        };
+
+        if (shippingAddress) {
+          updateData.shippingAddress = shippingAddress;
+          console.log('Adresse de livraison ajoutée:', shippingAddress);
+        } else {
+          console.log('Aucune adresse de livraison trouvée dans session.shipping.address');
+        }
+
+        if (billingAddress) {
+          updateData.billingAddress = billingAddress;
+          console.log('Adresse de facturation ajoutée:', billingAddress);
+        } else {
+          console.log('Aucune adresse de facturation trouvée dans session.customer_details.address');
+        }
+
+        await orderRef.update(updateData);
         console.log("Commande mise à jour à paid :", metadata.orderId);
 
         // Gestion du numéro de commande automatique (version corrigée)
