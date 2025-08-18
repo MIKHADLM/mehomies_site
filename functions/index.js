@@ -19,15 +19,58 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
       const items = req.body.items;
       const isPickup = req.body.isPickup; // boolean indicating if "remise en main propre" is checked
 
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ error: 'Le champ items doit être un tableau.' });
+      }
+
+      // Validate products
+      const validatedItems = [];
+      for (const item of items) {
+        if (!item.id || typeof item.prix !== 'number' || typeof item.quantite !== 'number') {
+          return res.status(400).json({ error: 'Produit invalide ou informations manquantes.' });
+        }
+
+        const produitRef = db.collection("produits").doc(item.id);
+        const produitSnap = await produitRef.get();
+
+        if (!produitSnap.exists) {
+          return res.status(400).json({ error: `Produit avec l'id ${item.id} introuvable.` });
+        }
+
+        const produitData = produitSnap.data();
+
+        // Vérifier le prix
+        if (produitData.prix !== item.prix) {
+          return res.status(400).json({ error: `Le prix pour le produit ${item.nom || item.id} ne correspond pas.` });
+        }
+
+        // Vérifier la quantité disponible
+        if (typeof produitData.stock === 'number') {
+          if (item.quantite > produitData.stock) {
+            return res.status(400).json({ error: `Quantité insuffisante pour le produit ${item.nom || item.id}.` });
+          }
+        } else if (typeof produitData.stock === 'object' && item.taille) {
+          const stockParTaille = produitData.stock;
+          const stockActuel = stockParTaille[item.taille] || 0;
+          if (item.quantite > stockActuel) {
+            return res.status(400).json({ error: `Quantité insuffisante pour le produit ${item.nom || item.id} taille ${item.taille}.` });
+          }
+        } else {
+          return res.status(400).json({ error: `Stock invalide pour le produit ${item.nom || item.id}.` });
+        }
+
+        validatedItems.push(item);
+      }
+
       // Create a new order in Firestore with status "pending"
       const orderRef = await db.collection("orders").add({
-        items,
+        items: validatedItems,
         isPickup,
         status: "pending",
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      const lineItems = items.map(item => ({
+      const lineItems = validatedItems.map(item => ({
         price_data: {
           currency: 'eur',
           product_data: {
@@ -52,7 +95,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1' }, async (req
 
       const session = await stripe.checkout.sessions.create({
         metadata: {
-          panier: JSON.stringify(items),
+          panier: JSON.stringify(validatedItems),
           isPickup: String(isPickup),
           orderId: orderRef.id
         },
