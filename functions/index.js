@@ -143,9 +143,10 @@ exports.stripeWebhook = onRequest(
 
     let event;
     try {
+      // Vérification de la signature Stripe pour s'assurer que la requête est authentique
       event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
     } catch (err) {
-      console.error("Erreur lors de la vérification du webhook :", err.message);
+      console.error("Webhook Stripe invalide :", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
