@@ -316,20 +316,11 @@
   </script>
 
   <!-- Firebase + logique produit -->
+  <script src="firebase-config.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDwi3alZ1KoGI81Tk4EIudA6BvQb7cYlec",
-      authDomain: "mehomiesstore.firebaseapp.com",
-      projectId: "mehomiesstore",
-      storageBucket: "mehomiesstore.firebasestorage.app",
-      messagingSenderId: "109137836087",
-      appId: "1:109137836087:web:b3a0ea342f8028595e27b2",
-      measurementId: "G-JG06M8XR7F"
-    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
