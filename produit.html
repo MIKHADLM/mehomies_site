@@ -316,8 +316,8 @@
   </script>
 
   <!-- Firebase + logique produit -->
-  <script src="firebase-config.js"></script>
   <script type="module">
+    import { firebaseConfig } from './firebase-config.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
