@@ -19,7 +19,8 @@ const getStripe = () => {
 
 const ALLOWED_ORIGINS = [
   'https://www.mehomies.com',
-  'https://mehomies.vercel.app'
+  'https://mehomies.vercel.app',
+  'https://mehomies-site-lx2nroux4-mikhadlms-projects.vercel.app'
 ];
 
 function setCors(res, origin) {
