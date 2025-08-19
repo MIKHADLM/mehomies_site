@@ -130,11 +130,21 @@
 <script type="module">
   // Import des SDKs nécessaires depuis un CDN moderne
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
   import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { firebaseConfig } from "./firebase-config.js";
+  import { firebaseConfig, APP_CHECK_SITE_KEY } from "./firebase-config.js";
 
   // Initialisation Firebase
   const app = initializeApp(firebaseConfig);
+  // Optional App Check initialization (set APP_CHECK_SITE_KEY in firebase-config.js)
+  if (APP_CHECK_SITE_KEY) {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (e) { /* no-op */ }
+  }
   const db = getFirestore(app);
 
   const productsContainer = document.querySelector('.products');
