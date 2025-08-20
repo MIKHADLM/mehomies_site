@@ -1,7 +1,7 @@
 // Firebase initialization and product loading (extracted from inline <script type="module"> in index.html)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-import { initializeFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Firestore SDK not required on index (using REST API to avoid Listen/channel)
 import { firebaseConfig, APP_CHECK_SITE_KEY } from "./firebase-config.js";
 import { getAppCheckToken } from "./appcheck.js";
 
@@ -20,36 +20,46 @@ if (APP_CHECK_SITE_KEY) {
   }
 }
 
-// Safari fallback: force long polling and disable fetch streams
-const db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
+// No Firestore SDK initialization; all reads go through REST
 
 const productsContainer = document.querySelector('.products');
 
 async function chargerProduits() {
-  // Force App Check token retrieval (helps Safari ensure token is present)
-  try { await getAppCheckToken(); } catch (_) {}
-  const querySnapshot = await getDocs(collection(db, "produits"));
-  querySnapshot.forEach((doc) => {
-    const produit = doc.data();
+  // Fetch via Firestore REST with App Check header to avoid Listen/channel
+  let token = null;
+  try { token = await getAppCheckToken(); } catch (_) {}
+  const res = await fetch('https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits', {
+    headers: {
+      ...(token ? { 'X-Firebase-AppCheck': token } : {})
+    }
+  });
+  const data = await res.json();
+  (data.documents || []).forEach((doc) => {
+    const id = doc.name.split('/').pop();
+    const f = doc.fields || {};
+    const nom = f.nom?.stringValue || '';
+    const prix = f.prix?.doubleValue ?? f.prix?.integerValue ?? 0;
+    const image1 = f.image?.stringValue || '';
+    const image2 = f.image2?.stringValue || '';
 
     const card = document.createElement('div');
     card.className = "product-card";
 
     const link = document.createElement('a');
-    link.href = `produit.html?id=${doc.id}`;
+    link.href = `produit.html?id=${id}`;
     link.className = 'product-link';
 
     const img = document.createElement('img');
-    img.src = produit.image;
-    img.alt = produit.nom;
-    img.dataset.image1 = produit.image || '';
-    if (produit.image2) img.dataset.image2 = produit.image2;
+    img.src = image1;
+    img.alt = nom;
+    img.dataset.image1 = image1;
+    if (image2) img.dataset.image2 = image2;
 
     const h4 = document.createElement('h4');
-    h4.textContent = produit.nom;
+    h4.textContent = nom;
 
     const price = document.createElement('p');
-    price.textContent = `${produit.prix} €`;
+    price.textContent = `${prix} €`;
 
     link.appendChild(img);
     link.appendChild(h4);
@@ -58,28 +68,14 @@ async function chargerProduits() {
 
     productsContainer.appendChild(card);
 
-    // Gestion des événements d'image secondaire (desktop & mobile)
     const originalSrc = img.dataset.image1;
     const secondSrc = img.dataset.image2;
-
-    // Hover pour desktop
-    img.addEventListener('mouseenter', () => {
-      img.src = secondSrc;
-    });
-    img.addEventListener('mouseleave', () => {
-      img.src = originalSrc;
-    });
-
-    // Touch pour mobile
-    img.addEventListener('touchstart', () => {
-      img.src = secondSrc;
-    });
-    img.addEventListener('touchend', () => {
-      img.src = originalSrc;
-    });
+    img.addEventListener('mouseenter', () => { if (secondSrc) img.src = secondSrc; });
+    img.addEventListener('mouseleave', () => { img.src = originalSrc; });
+    img.addEventListener('touchstart', () => { if (secondSrc) img.src = secondSrc; });
+    img.addEventListener('touchend', () => { img.src = originalSrc; });
   });
 
-  // Réactive les boutons "Ajouter au panier"
   activerAjoutPanier();
 }
 
