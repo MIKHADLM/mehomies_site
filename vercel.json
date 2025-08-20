@@ -11,7 +11,7 @@
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; img-src 'self' data: https:; script-src 'self' https://www.gstatic.com https://js.stripe.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://firestore.googleapis.com https://europe-west1-mehomiesstore.cloudfunctions.net https://api.stripe.com; frame-src https://js.stripe.com; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; img-src 'self' data: https:; script-src 'self' https://www.gstatic.com https://js.stripe.com https://www.google.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://firestore.googleapis.com https://europe-west1-mehomiesstore.cloudfunctions.net https://api.stripe.com https://www.google.com https://www.recaptcha.net https://content-firebaseappcheck.googleapis.com; frame-src https://js.stripe.com https://www.google.com https://www.recaptcha.net; object-src 'none'; upgrade-insecure-requests"
         }
       ]
     }

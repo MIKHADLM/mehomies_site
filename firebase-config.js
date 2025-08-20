@@ -10,4 +10,4 @@ export const firebaseConfig = {
 
 // Optional: set this to your reCAPTCHA v3 site key to enable Firebase App Check on the web client
 // Keep empty string to disable until configured in Firebase Console
-export const APP_CHECK_SITE_KEY = "";
+export const APP_CHECK_SITE_KEY = "6LfNS6wrAAAAAMp3_0IxL4e7WpE7ui_w1CeBXYwT";
