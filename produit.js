@@ -3,6 +3,7 @@ import { firebaseConfig, APP_CHECK_SITE_KEY } from './firebase-config.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAppCheckToken } from './appcheck.js';
 
 const app = initializeApp(firebaseConfig);
 if (APP_CHECK_SITE_KEY) {
@@ -220,9 +221,13 @@ if (!produitId) {
         const isPickup = document.getElementById("remise-main-propre").checked;
 
         try {
+          const appCheckToken = await getAppCheckToken();
           const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {})
+            },
             body: JSON.stringify({ items, isPickup })
           });
           const data = await response.json();

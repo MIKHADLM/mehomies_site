@@ -31,18 +31,30 @@ async function chargerProduits() {
     const card = document.createElement('div');
     card.className = "product-card";
 
-    card.innerHTML = `
-      <a href="produit.html?id=${doc.id}" class="product-link">
-        <img src="${produit.image}" alt="${produit.nom}" data-image1="${produit.image}" data-image2="${produit.image2}">
-        <h4>${produit.nom}</h4>
-        <p>${produit.prix} €</p>
-      </a>
-    `;
+    const link = document.createElement('a');
+    link.href = `produit.html?id=${doc.id}`;
+    link.className = 'product-link';
+
+    const img = document.createElement('img');
+    img.src = produit.image;
+    img.alt = produit.nom;
+    img.dataset.image1 = produit.image || '';
+    if (produit.image2) img.dataset.image2 = produit.image2;
+
+    const h4 = document.createElement('h4');
+    h4.textContent = produit.nom;
+
+    const price = document.createElement('p');
+    price.textContent = `${produit.prix} €`;
+
+    link.appendChild(img);
+    link.appendChild(h4);
+    link.appendChild(price);
+    card.appendChild(link);
 
     productsContainer.appendChild(card);
 
     // Gestion des événements d'image secondaire (desktop & mobile)
-    const img = card.querySelector('img');
     const originalSrc = img.dataset.image1;
     const secondSrc = img.dataset.image2;
 

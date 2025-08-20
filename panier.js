@@ -1,4 +1,6 @@
 // Panier page logic (extracted from panier.html inline scripts)
+import { getAppCheckToken } from './appcheck.js';
+
 (function() {
   function afficherPanier() {
     const panier = JSON.parse(localStorage.getItem('panier')) || [];
@@ -250,27 +252,30 @@
   function initStripeCheckout() {
     const boutonPayer = document.getElementById('finaliser-commande');
     if (!boutonPayer) return;
-    boutonPayer.addEventListener('click', function (e) {
+    boutonPayer.addEventListener('click', async function (e) {
       e.preventDefault();
       const panier = JSON.parse(localStorage.getItem('panier')) || [];
       const remiseMainPropre = document.getElementById('remise-main-propre').checked;
-      fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: panier, isPickup: remiseMainPropre })
-      })
-      .then(res => res.json())
-      .then(data => {
+      try {
+        const appCheckToken = await getAppCheckToken();
+        const res = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/createCheckoutSession', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {})
+          },
+          body: JSON.stringify({ items: panier, isPickup: remiseMainPropre })
+        });
+        const data = await res.json();
         if (data.url) {
           window.location.href = data.url;
         } else {
           alert("Erreur : aucun lien de paiement reçu.");
         }
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Erreur Stripe :', error);
         alert("Une erreur est survenue lors de la création du paiement.");
-      });
+      }
     });
   }
 

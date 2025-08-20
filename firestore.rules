@@ -7,19 +7,9 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Orders: création par utilisateur connecté uniquement, lecture par propriétaire, MAJ côté serveur uniquement
+    // Orders: accès client désactivé. Lecture/écriture uniquement via Cloud Functions (serveur)
     match /orders/{orderId} {
-      // Only allow create from clients for pending orders owned by the caller.
-      allow create: if request.auth != null
-                    && request.resource.data.status == 'pending'
-                    && request.resource.data.userId == request.auth.uid
-                    && (request.time != null);
-
-      // Only allow read for the owner
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-
-      // No client-side updates or deletes
-      allow update, delete: if false;
+      allow read, write: if false;
     }
 
     // Counter and other sensitive collections: deny all from client

@@ -19,6 +19,7 @@ const getStripe = () => {
 
 const ALLOWED_ORIGINS = [
   'https://www.mehomies.com',
+  'https://mehomies.com',
   'https://mehomies.vercel.app',
   'https://mehomies-site-lx2nroux4-mikhadlms-projects.vercel.app'
 ];
@@ -356,9 +357,14 @@ exports.getOrderDetails = onRequest({ region: 'europe-west1' }, async (req, res)
 
       const orderData = orderSnap.data();
 
-      // If auth present and order has userId, ensure ownership
-      if (orderData.userId && authContext.uid && orderData.userId !== authContext.uid) {
-        return res.status(403).json({ error: 'Forbidden' });
+      // If order has userId, require authenticated user and ensure ownership
+      if (orderData.userId) {
+        if (!authContext.uid) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        if (orderData.userId !== authContext.uid) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
       }
 
       // Retourner uniquement les informations sécurisées
