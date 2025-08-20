@@ -77,53 +77,67 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
       if (!Array.isArray(items)) {
         return res.status(400).json({ error: 'Le champ items doit être un tableau.' });
       }
+      // Allocate an orderRef (ID used as idempotency key)
+      const orderRef = db.collection("orders").doc();
 
-      // Validate products
-      const validatedItems = [];
-      for (const item of items) {
-        if (!item.id || typeof item.prix !== 'number' || typeof item.quantite !== 'number') {
-          return res.status(400).json({ error: 'Produit invalide ou informations manquantes.' });
-        }
+      // Reserve stock atomically and create order document in the same transaction
+      let validatedItems = [];
+      const reservationMinutes = 30;
+      const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + reservationMinutes * 60 * 1000));
 
-        const produitRef = db.collection("produits").doc(item.id);
-        const produitSnap = await produitRef.get();
-
-        if (!produitSnap.exists) {
-          return res.status(400).json({ error: `Produit avec l'id ${item.id} introuvable.` });
-        }
-
-        const produitData = produitSnap.data();
-
-        // Vérifier le prix
-        if (produitData.prix !== item.prix) {
-          return res.status(400).json({ error: `Le prix pour le produit ${item.nom || item.id} ne correspond pas.` });
-        }
-
-        // Vérifier la quantité disponible
-        if (typeof produitData.stock === 'number') {
-          if (item.quantite > produitData.stock) {
-            return res.status(400).json({ error: `Quantité insuffisante pour le produit ${item.nom || item.id}.` });
+      await db.runTransaction(async (tx) => {
+        // Validate each product and update stock
+        validatedItems = [];
+        for (const item of items) {
+          if (!item.id || typeof item.prix !== 'number' || typeof item.quantite !== 'number') {
+            throw new Error('Produit invalide ou informations manquantes.');
           }
-        } else if (typeof produitData.stock === 'object' && item.taille) {
-          const stockParTaille = produitData.stock;
-          const stockActuel = stockParTaille[item.taille] || 0;
-          if (item.quantite > stockActuel) {
-            return res.status(400).json({ error: `Quantité insuffisante pour le produit ${item.nom || item.id} taille ${item.taille}.` });
+
+          const produitRef = db.collection('produits').doc(item.id);
+          const snap = await tx.get(produitRef);
+          if (!snap.exists) {
+            throw new Error(`Produit avec l'id ${item.id} introuvable.`);
           }
-        } else {
-          return res.status(400).json({ error: `Stock invalide pour le produit ${item.nom || item.id}.` });
+          const produitData = snap.data();
+
+          // Prix exact requis
+          if (produitData.prix !== item.prix) {
+            throw new Error(`Le prix pour le produit ${item.nom || item.id} ne correspond pas.`);
+          }
+
+          // Vérification stricte et réservation
+          if (typeof produitData.stock === 'number') {
+            const disponible = produitData.stock || 0;
+            if (item.quantite > disponible) {
+              throw new Error(`Quantité insuffisante pour le produit ${item.nom || item.id}.`);
+            }
+            tx.update(produitRef, { stock: disponible - item.quantite });
+          } else if (typeof produitData.stock === 'object' && item.taille) {
+            const stockParTaille = { ...(produitData.stock || {}) };
+            const stockActuel = stockParTaille[item.taille] || 0;
+            if (item.quantite > stockActuel) {
+              throw new Error(`Quantité insuffisante pour le produit ${item.nom || item.id} taille ${item.taille}.`);
+            }
+            stockParTaille[item.taille] = stockActuel - item.quantite;
+            tx.update(produitRef, { stock: stockParTaille });
+          } else {
+            throw new Error(`Stock invalide pour le produit ${item.nom || item.id}.`);
+          }
+
+          validatedItems.push(item);
         }
 
-        validatedItems.push(item);
-      }
-
-      // Create a new order in Firestore with status "pending"
-      const orderRef = await db.collection("orders").add({
-        items: validatedItems,
-        isPickup,
-        status: "pending",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        ...(authContext.uid && { userId: authContext.uid })
+        // Create order as reserved
+        tx.set(orderRef, {
+          items: validatedItems,
+          isPickup,
+          status: 'reserved',
+          stockReserved: true,
+          reservedAt: admin.firestore.FieldValue.serverTimestamp(),
+          expiresAt,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          ...(authContext.uid && { userId: authContext.uid })
+        });
       });
 
       const lineItems = validatedItems.map(item => ({
@@ -176,6 +190,10 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
       res.status(200).json({ url: session.url, orderId: orderRef.id });
     } catch (error) {
       console.error('createCheckoutSession error:', error.message);
+      // Surface validation errors
+      if (typeof error.message === 'string' && /Quantité insuffisante|introuvable|invalide|prix/.test(error.message)) {
+        return res.status(400).json({ error: error.message });
+      }
       res.status(500).json({ error: 'Erreur lors de la création de la session Stripe' });
     }
     
@@ -207,6 +225,7 @@ exports.stripeWebhook = onRequest(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    // Handle successful payment
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       console.log('Stripe checkout.session.completed received:', session.id);
@@ -224,24 +243,41 @@ exports.stripeWebhook = onRequest(
         }
       }
 
-      // Transactional stock update per product
-      for (const item of panier) {
-        const produitRef = db.collection('produits').doc(item.id);
-        await db.runTransaction(async (tx) => {
-          const snap = await tx.get(produitRef);
-          if (!snap.exists) return;
-          const produit = snap.data();
-          if (typeof produit.stock === 'number') {
-            const nouveauStock = Math.max((produit.stock || 0) - item.quantite, 0);
-            tx.update(produitRef, { stock: nouveauStock });
-          } else if (typeof produit.stock === 'object' && item.taille) {
-            const stockParTaille = { ...(produit.stock || {}) };
-            const taille = item.taille;
-            const stockActuel = stockParTaille[taille] || 0;
-            stockParTaille[taille] = Math.max(stockActuel - item.quantite, 0);
-            tx.update(produitRef, { stock: stockParTaille });
+      // If order was reserved earlier, do NOT decrement again
+      if (metadata.orderId) {
+        const orderRef = db.collection('orders').doc(metadata.orderId);
+        const orderSnap = await orderRef.get();
+        const orderData = orderSnap.exists ? orderSnap.data() : null;
+        if (!orderData) {
+          console.warn('Order not found at webhook completion:', metadata.orderId);
+        } else if (orderData.stockReserved) {
+          console.log('Stock already reserved. Skipping decrement. Order:', metadata.orderId);
+        } else {
+          // Backwards compatibility: decrement now with strict check
+          for (const item of panier) {
+            const produitRef = db.collection('produits').doc(item.id);
+            await db.runTransaction(async (tx) => {
+              const snap = await tx.get(produitRef);
+              if (!snap.exists) return;
+              const produit = snap.data();
+              if (typeof produit.stock === 'number') {
+                const disponible = produit.stock || 0;
+                if (item.quantite > disponible) {
+                  throw new Error(`Stock insuffisant pour finaliser la commande ${metadata.orderId} sur ${item.id}`);
+                }
+                tx.update(produitRef, { stock: disponible - item.quantite });
+              } else if (typeof produit.stock === 'object' && item.taille) {
+                const stockParTaille = { ...(produit.stock || {}) };
+                const stockActuel = stockParTaille[item.taille] || 0;
+                if (item.quantite > stockActuel) {
+                  throw new Error(`Stock insuffisant pour finaliser la commande ${metadata.orderId} sur ${item.id} ${item.taille}`);
+                }
+                stockParTaille[item.taille] = stockActuel - item.quantite;
+                tx.update(produitRef, { stock: stockParTaille });
+              }
+            });
           }
-        });
+        }
       }
 
       const shippingAddress = session.shipping?.address ? {
@@ -324,6 +360,43 @@ exports.stripeWebhook = onRequest(
           transaction.set(counterRef, { Year: yearStored, Sequences: sequences }, { merge: true });
           transaction.update(orderRef, { orderNumber });
         });
+      }
+    }
+
+    // Release reservation for expired sessions
+    if (event.type === 'checkout.session.expired') {
+      const session = event.data.object;
+      const metadata = session.metadata || {};
+      const orderId = metadata.orderId;
+      if (orderId) {
+        const orderRef = db.collection('orders').doc(orderId);
+        const snap = await orderRef.get();
+        if (snap.exists) {
+          const data = snap.data();
+          if (data.status === 'reserved' && data.stockReserved) {
+            const items = Array.isArray(data.items) ? data.items : [];
+            await db.runTransaction(async (tx) => {
+              // restore stock
+              for (const item of items) {
+                const produitRef = db.collection('produits').doc(item.id);
+                const psnap = await tx.get(produitRef);
+                if (!psnap.exists) continue;
+                const produit = psnap.data();
+                if (typeof produit.stock === 'number') {
+                  const actuel = produit.stock || 0;
+                  tx.update(produitRef, { stock: actuel + (item.quantite || 0) });
+                } else if (typeof produit.stock === 'object' && item.taille) {
+                  const stockParTaille = { ...(produit.stock || {}) };
+                  const actuel = stockParTaille[item.taille] || 0;
+                  stockParTaille[item.taille] = actuel + (item.quantite || 0);
+                  tx.update(produitRef, { stock: stockParTaille });
+                }
+              }
+              tx.update(orderRef, { status: 'canceled', stockReserved: false, canceledAt: admin.firestore.FieldValue.serverTimestamp() });
+            });
+            console.log('Reservation released for expired session, order:', orderId);
+          }
+        }
       }
     }
 
