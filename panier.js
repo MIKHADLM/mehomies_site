@@ -223,33 +223,18 @@ import { getAppCheckToken } from './appcheck.js';
   let catalogueProduits = {};
   async function chargerCatalogue() {
     const appCheckToken = await getAppCheckToken();
-    const response = await fetch('https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits', {
+    const response = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/listProducts', {
       headers: {
         ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {})
       }
     });
     const data = await response.json();
-    (data.documents || []).forEach(doc => {
-      const prod = doc.fields;
-      let stockValue;
-      if (prod.stock) {
-        if (prod.stock.mapValue && prod.stock.mapValue.fields) {
-          stockValue = {};
-          for (const taille in prod.stock.mapValue.fields) {
-            const val = prod.stock.mapValue.fields[taille];
-            stockValue[taille] = val.integerValue !== undefined ? parseInt(val.integerValue) : (val.doubleValue !== undefined ? parseFloat(val.doubleValue) : 0);
-          }
-        } else if (prod.stock.integerValue !== undefined) {
-          stockValue = parseInt(prod.stock.integerValue);
-        } else if (prod.stock.doubleValue !== undefined) {
-          stockValue = parseFloat(prod.stock.doubleValue);
-        }
-      }
-      catalogueProduits[doc.name.split('/').pop()] = {
-        nom: prod.nom.stringValue,
-        prix: parseFloat(prod.prix.doubleValue || prod.prix.integerValue),
-        image: prod.image.stringValue,
-        stock: stockValue
+    (data.produits || []).forEach(p => {
+      catalogueProduits[p.id] = {
+        nom: p.nom,
+        prix: p.prix,
+        image: p.image,
+        stock: p.stock
       };
     });
   }

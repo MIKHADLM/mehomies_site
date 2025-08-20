@@ -42,40 +42,23 @@ if (!produitId) {
   // Fetch product via Firestore REST with App Check header
   let token = null;
   try { token = await getAppCheckToken(); } catch (_) {}
-  fetch(`https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits/${encodeURIComponent(produitId)}`, {
+  fetch(`https://europe-west1-mehomiesstore.cloudfunctions.net/getProduct?id=${encodeURIComponent(produitId)}`, {
     headers: {
       ...(token ? { 'X-Firebase-AppCheck': token } : {})
     }
   }).then(r => r.json()).then(data => {
-    if (data && data.fields) {
-      const f = data.fields;
+    if (data && data.id) {
       const produit = {
-        nom: f.nom?.stringValue || "",
-        prix: parseFloat(f.prix?.doubleValue ?? f.prix?.integerValue ?? 0),
-        description: f.description?.stringValue || "",
-        tailles: Array.isArray(f.tailles?.arrayValue?.values)
-          ? f.tailles.arrayValue.values.map(v => v.stringValue)
-          : [],
-        image: f.image?.stringValue || "",
-        image2: f.image2?.stringValue,
-        image3: f.image3?.stringValue,
-        image4: f.image4?.stringValue,
-        image5: f.image5?.stringValue,
-        stock: (() => {
-          if (f.stock?.mapValue?.fields) {
-            const out = {};
-            for (const k in f.stock.mapValue.fields) {
-              const val = f.stock.mapValue.fields[k];
-              out[k] = val.integerValue !== undefined
-                ? parseInt(val.integerValue)
-                : (val.doubleValue !== undefined ? parseFloat(val.doubleValue) : 0);
-            }
-            return out;
-          }
-          if (f.stock?.integerValue !== undefined) return parseInt(f.stock.integerValue);
-          if (f.stock?.doubleValue !== undefined) return parseFloat(f.stock.doubleValue);
-          return 0;
-        })()
+        nom: data.nom || "",
+        prix: parseFloat(data.prix ?? 0),
+        description: data.description || "",
+        tailles: Array.isArray(data.tailles) ? data.tailles : [],
+        image: data.image || "",
+        image2: data.image2,
+        image3: data.image3,
+        image4: data.image4,
+        image5: data.image5,
+        stock: data.stock ?? 0,
       };
       const descriptionLines = (produit.description || "")
         .split(/\n+/)

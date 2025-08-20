@@ -28,19 +28,18 @@ async function chargerProduits() {
   // Fetch via Firestore REST with App Check header to avoid Listen/channel
   let token = null;
   try { token = await getAppCheckToken(); } catch (_) {}
-  const res = await fetch('https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits', {
+  const res = await fetch('https://europe-west1-mehomiesstore.cloudfunctions.net/listProducts', {
     headers: {
       ...(token ? { 'X-Firebase-AppCheck': token } : {})
     }
   });
   const data = await res.json();
-  (data.documents || []).forEach((doc) => {
-    const id = doc.name.split('/').pop();
-    const f = doc.fields || {};
-    const nom = f.nom?.stringValue || '';
-    const prix = f.prix?.doubleValue ?? f.prix?.integerValue ?? 0;
-    const image1 = f.image?.stringValue || '';
-    const image2 = f.image2?.stringValue || '';
+  (data.produits || []).forEach((p) => {
+    const id = p.id;
+    const nom = p.nom || '';
+    const prix = p.prix || 0;
+    const image1 = p.image || '';
+    const image2 = p.image2 || '';
 
     const card = document.createElement('div');
     card.className = "product-card";

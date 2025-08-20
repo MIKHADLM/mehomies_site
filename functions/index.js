@@ -377,3 +377,75 @@ exports.getOrderDetails = onRequest({ region: 'europe-west1' }, async (req, res)
       return res.status(500).json({ error: "Erreur serveur" });
     }
 });
+
+// Public product listing via Cloud Function, protected by App Check or Auth
+exports.listProducts = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  const origin = req.headers.origin;
+  setCors(res, origin);
+  if (req.method === 'OPTIONS') return res.status(204).send('');
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+  try {
+    const authContext = await verifyAuthOrAppCheck(req);
+    if (!authContext) return res.status(401).json({ error: 'Unauthorized' });
+
+    const snap = await db.collection('produits').get();
+    const produits = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        nom: data.nom || '',
+        prix: data.prix || 0,
+        image: data.image || '',
+        image2: data.image2 || '',
+        image3: data.image3 || '',
+        image4: data.image4 || '',
+        image5: data.image5 || '',
+        tailles: Array.isArray(data.tailles) ? data.tailles : [],
+        stock: data.stock ?? 0,
+      };
+    });
+    return res.status(200).json({ produits });
+  } catch (err) {
+    console.error('listProducts error:', err.message);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Public single product fetch via Cloud Function, protected by App Check or Auth
+exports.getProduct = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  const origin = req.headers.origin;
+  setCors(res, origin);
+  if (req.method === 'OPTIONS') return res.status(204).send('');
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+  try {
+    const authContext = await verifyAuthOrAppCheck(req);
+    if (!authContext) return res.status(401).json({ error: 'Unauthorized' });
+
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'id manquant' });
+    const ref = db.collection('produits').doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'Produit introuvable' });
+    const data = snap.data();
+    return res.status(200).json({
+      id: snap.id,
+      nom: data.nom || '',
+      prix: data.prix || 0,
+      description: data.description || '',
+      tailles: Array.isArray(data.tailles) ? data.tailles : [],
+      image: data.image || '',
+      image2: data.image2 || '',
+      image3: data.image3 || '',
+      image4: data.image4 || '',
+      image5: data.image5 || '',
+      stock: data.stock ?? 0,
+    });
+  } catch (err) {
+    console.error('getProduct error:', err.message);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
