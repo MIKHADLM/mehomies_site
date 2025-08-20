@@ -256,15 +256,20 @@ import { getAppCheckToken } from './appcheck.js';
           },
           body: JSON.stringify({ items: panier, isPickup: remiseMainPropre })
         });
-        const data = await res.json();
+        let data = {};
+        try { data = await res.json(); } catch (_) { data = {}; }
+        if (!res.ok) {
+          alert("Stock réservé, veuillez réessayer ultérieurement.");
+          return;
+        }
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert("Erreur : aucun lien de paiement reçu.");
+          alert(data.error || "Le paiement n'a pas pu être initialisé. Veuillez réessayer ultérieurement.");
         }
       } catch (error) {
         console.error('Erreur Stripe :', error);
-        alert("Une erreur est survenue lors de la création du paiement.");
+        alert("Une erreur est survenue lors de la création du paiement. Veuillez réessayer ultérieurement.");
       }
     });
   }
