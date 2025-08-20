@@ -82,6 +82,42 @@
       box-sizing: border-box;
     }
 
+    /* Ticker (bande d'annonce) */
+    .ticker {
+      width: 100vw;
+      position: relative;
+      left: 50%;
+      margin-left: -50vw;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .ticker__wrap {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      padding: 0.75rem 1rem; /* padding moved from track to wrapper for seamless loop */
+    }
+    .ticker__track {
+      display: inline-flex;
+      gap: 3rem;
+      will-change: transform;
+      animation: ticker-scroll 25s linear infinite;
+    }
+    .ticker__content { display: inline-flex; gap: 3rem; }
+    .ticker__item {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      font-size: 0.95rem;
+    }
+    @keyframes ticker-scroll {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(-50%, 0, 0); }
+    }
+
     .product-card {
       background: white;
       border-radius: 8px;
@@ -141,6 +177,20 @@
       </video>
     </div>
 
+    <!-- Bande d'annonce défilante -->
+    <section class="ticker" aria-label="Annonces">
+      <div class="ticker__wrap">
+        <div class="ticker__track" id="tickerTrack">
+          <div class="ticker__content" id="tickerContent">
+            <span class="ticker__item">Précommande disponible maintenant</span>
+            <span class="ticker__item">Retrait gratuit sur place</span>
+            <span class="ticker__item">Nouveautés à venir</span>
+            <span class="ticker__item">Soirée Mehomies le 07/09/2025</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
     <section class="products">
 
@@ -151,5 +201,15 @@
   <div id="footer"></div>
   <!-- Layout loader extracted to external script for CSP compliance -->
   <script src="/layout-loader.js" defer></script>
+  <script>
+    // Duplicate ticker content once to achieve a perfectly seamless loop
+    (function() {
+      const track = document.getElementById('tickerTrack');
+      const content = document.getElementById('tickerContent');
+      if (!track || !content) return;
+      const clone = content.cloneNode(true);
+      track.appendChild(clone);
+    })();
+  </script>
 </body>
 </html>
