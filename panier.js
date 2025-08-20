@@ -222,7 +222,12 @@ import { getAppCheckToken } from './appcheck.js';
 
   let catalogueProduits = {};
   async function chargerCatalogue() {
-    const response = await fetch('https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits');
+    const appCheckToken = await getAppCheckToken();
+    const response = await fetch('https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits', {
+      headers: {
+        ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {})
+      }
+    });
     const data = await response.json();
     (data.documents || []).forEach(doc => {
       const prod = doc.fields;
