@@ -2,7 +2,7 @@
 import { firebaseConfig, APP_CHECK_SITE_KEY } from './firebase-config.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-import { initializeFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Firestore SDK not needed for this page after switching to REST fetch
 import { getAppCheckToken } from './appcheck.js';
 
 const app = initializeApp(firebaseConfig);
@@ -14,8 +14,7 @@ if (APP_CHECK_SITE_KEY) {
     });
   } catch (e) { /* no-op */ }
 }
-// Safari fallback: force long polling and disable fetch streams
-const db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
+// No Firestore SDK initialization needed here (using REST API)
 
 const params = new URLSearchParams(window.location.search);
 const produitId = params.get("id");
@@ -40,12 +39,44 @@ window.afficherImage = function(index) {
 if (!produitId) {
   alert("Aucun ID produit trouvé dans l'URL.");
 } else {
-  // Ensure App Check token before first read
-  try { await getAppCheckToken(); } catch (_) {}
-  const docRef = doc(db, "produits", produitId);
-  getDoc(docRef).then(docSnap => {
-    if (docSnap.exists()) {
-      const produit = docSnap.data();
+  // Fetch product via Firestore REST with App Check header
+  let token = null;
+  try { token = await getAppCheckToken(); } catch (_) {}
+  fetch(`https://firestore.googleapis.com/v1/projects/mehomiesstore/databases/(default)/documents/produits/${encodeURIComponent(produitId)}`, {
+    headers: {
+      ...(token ? { 'X-Firebase-AppCheck': token } : {})
+    }
+  }).then(r => r.json()).then(data => {
+    if (data && data.fields) {
+      const f = data.fields;
+      const produit = {
+        nom: f.nom?.stringValue || "",
+        prix: parseFloat(f.prix?.doubleValue ?? f.prix?.integerValue ?? 0),
+        description: f.description?.stringValue || "",
+        tailles: Array.isArray(f.tailles?.arrayValue?.values)
+          ? f.tailles.arrayValue.values.map(v => v.stringValue)
+          : [],
+        image: f.image?.stringValue || "",
+        image2: f.image2?.stringValue,
+        image3: f.image3?.stringValue,
+        image4: f.image4?.stringValue,
+        image5: f.image5?.stringValue,
+        stock: (() => {
+          if (f.stock?.mapValue?.fields) {
+            const out = {};
+            for (const k in f.stock.mapValue.fields) {
+              const val = f.stock.mapValue.fields[k];
+              out[k] = val.integerValue !== undefined
+                ? parseInt(val.integerValue)
+                : (val.doubleValue !== undefined ? parseFloat(val.doubleValue) : 0);
+            }
+            return out;
+          }
+          if (f.stock?.integerValue !== undefined) return parseInt(f.stock.integerValue);
+          if (f.stock?.doubleValue !== undefined) return parseFloat(f.stock.doubleValue);
+          return 0;
+        })()
+      };
       const descriptionLines = (produit.description || "")
         .split(/\n+/)
         .filter(line => line.trim() !== "");
@@ -262,7 +293,7 @@ if (!produitId) {
     } else {
       alert("Produit introuvable.");
     }
-  });
+  }).catch(() => alert("Erreur de chargement du produit."));
 }
 
 // Custom cursor & carousel hover logic (extracted)
