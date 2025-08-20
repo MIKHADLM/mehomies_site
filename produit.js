@@ -2,7 +2,7 @@
 import { firebaseConfig, APP_CHECK_SITE_KEY } from './firebase-config.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Firestore SDK not needed for this page after switching to REST fetch
 import { getAppCheckToken } from './appcheck.js';
 
 const app = initializeApp(firebaseConfig);
@@ -14,7 +14,7 @@ if (APP_CHECK_SITE_KEY) {
     });
   } catch (e) { /* no-op */ }
 }
-const db = getFirestore(app);
+// No Firestore SDK initialization needed here (using REST API)
 
 const params = new URLSearchParams(window.location.search);
 const produitId = params.get("id");
@@ -39,10 +39,27 @@ window.afficherImage = function(index) {
 if (!produitId) {
   alert("Aucun ID produit trouvé dans l'URL.");
 } else {
-  const docRef = doc(db, "produits", produitId);
-  getDoc(docRef).then(docSnap => {
-    if (docSnap.exists()) {
-      const produit = docSnap.data();
+  // Fetch product via Firestore REST with App Check header
+  let token = null;
+  try { token = await getAppCheckToken(); } catch (_) {}
+  fetch(`https://europe-west1-mehomiesstore.cloudfunctions.net/getProduct?id=${encodeURIComponent(produitId)}`, {
+    headers: {
+      ...(token ? { 'X-Firebase-AppCheck': token } : {})
+    }
+  }).then(r => r.json()).then(data => {
+    if (data && data.id) {
+      const produit = {
+        nom: data.nom || "",
+        prix: parseFloat(data.prix ?? 0),
+        description: data.description || "",
+        tailles: Array.isArray(data.tailles) ? data.tailles : [],
+        image: data.image || "",
+        image2: data.image2,
+        image3: data.image3,
+        image4: data.image4,
+        image5: data.image5,
+        stock: data.stock ?? 0,
+      };
       const descriptionLines = (produit.description || "")
         .split(/\n+/)
         .filter(line => line.trim() !== "");
@@ -259,7 +276,7 @@ if (!produitId) {
     } else {
       alert("Produit introuvable.");
     }
-  });
+  }).catch(() => alert("Erreur de chargement du produit."));
 }
 
 // Custom cursor & carousel hover logic (extracted)
