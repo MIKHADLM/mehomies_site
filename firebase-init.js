@@ -1,7 +1,7 @@
 // Firebase initialization and product loading (extracted from inline <script type="module"> in index.html)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, APP_CHECK_SITE_KEY } from "./firebase-config.js";
 import { getAppCheckToken } from "./appcheck.js";
 
@@ -20,7 +20,8 @@ if (APP_CHECK_SITE_KEY) {
   }
 }
 
-const db = getFirestore(app);
+// Safari fallback: force long polling and disable fetch streams
+const db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
 
 const productsContainer = document.querySelector('.products');
 

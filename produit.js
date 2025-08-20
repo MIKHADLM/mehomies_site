@@ -2,7 +2,7 @@
 import { firebaseConfig, APP_CHECK_SITE_KEY } from './firebase-config.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAppCheckToken } from './appcheck.js';
 
 const app = initializeApp(firebaseConfig);
@@ -14,7 +14,8 @@ if (APP_CHECK_SITE_KEY) {
     });
   } catch (e) { /* no-op */ }
 }
-const db = getFirestore(app);
+// Safari fallback: force long polling and disable fetch streams
+const db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
 
 const params = new URLSearchParams(window.location.search);
 const produitId = params.get("id");
@@ -39,6 +40,8 @@ window.afficherImage = function(index) {
 if (!produitId) {
   alert("Aucun ID produit trouvé dans l'URL.");
 } else {
+  // Ensure App Check token before first read
+  try { await getAppCheckToken(); } catch (_) {}
   const docRef = doc(db, "produits", produitId);
   getDoc(docRef).then(docSnap => {
     if (docSnap.exists()) {
