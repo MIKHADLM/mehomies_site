@@ -3,6 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, APP_CHECK_SITE_KEY } from "./firebase-config.js";
+import { getAppCheckToken } from "./appcheck.js";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -24,6 +25,8 @@ const db = getFirestore(app);
 const productsContainer = document.querySelector('.products');
 
 async function chargerProduits() {
+  // Force App Check token retrieval (helps Safari ensure token is present)
+  try { await getAppCheckToken(); } catch (_) {}
   const querySnapshot = await getDocs(collection(db, "produits"));
   querySnapshot.forEach((doc) => {
     const produit = doc.data();
