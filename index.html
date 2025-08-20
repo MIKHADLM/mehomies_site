@@ -126,90 +126,9 @@
     }
   </style>
 
-  <!-- Firebase SDKs -->
-<script type="module">
-  // Import des SDKs nécessaires depuis un CDN moderne
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { firebaseConfig } from "./firebase-config.js";
-
-  // Initialisation Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  const productsContainer = document.querySelector('.products');
-
-  async function chargerProduits() {
-    const querySnapshot = await getDocs(collection(db, "produits"));
-    querySnapshot.forEach((doc) => {
-      const produit = doc.data();
-
-      const card = document.createElement('div');
-      card.className = "product-card";
-
-      card.innerHTML = `
-        <a href="produit.html?id=${doc.id}" class="product-link">
-          <img src="${produit.image}" alt="${produit.nom}" data-image1="${produit.image}" data-image2="${produit.image2}">
-          <h4>${produit.nom}</h4>
-          <p>${produit.prix} €</p>
-        </a>
-      `;
-
-      productsContainer.appendChild(card);
-
-      // Gestion des événements d'image secondaire (desktop & mobile)
-      const img = card.querySelector('img');
-      const originalSrc = img.dataset.image1;
-      const secondSrc = img.dataset.image2;
-
-      // Hover pour desktop
-      img.addEventListener('mouseenter', () => {
-        img.src = secondSrc;
-      });
-      img.addEventListener('mouseleave', () => {
-        img.src = originalSrc;
-      });
-
-      // Touch pour mobile
-      img.addEventListener('touchstart', () => {
-        img.src = secondSrc;
-      });
-      img.addEventListener('touchend', () => {
-        img.src = originalSrc;
-      });
-    });
-
-    // Réactive les boutons "Ajouter au panier"
-    activerAjoutPanier();
-  }
-
-function activerAjoutPanier() {
-  document.querySelectorAll('.ajouter-panier').forEach(bouton => {
-    bouton.addEventListener('click', function () {
-      const id = this.dataset.id;
-      const nom = this.dataset.nom;
-      const prix = parseFloat(this.dataset.prix);
-
-      let panier = JSON.parse(localStorage.getItem('panier')) || [];
-      const produitExistant = panier.find(p => p.id === id);
-      if (produitExistant) {
-        produitExistant.quantite++;
-      } else {
-        panier.push({ id, nom, prix, quantite: 1 });
-      }
-
-      localStorage.setItem('panier', JSON.stringify(panier));
-
-      updateCartCount(); // <-- Ajouté ici !
-
-      alert(`${nom} ajouté au panier`);
-    });
-  });
-}
-
-  chargerProduits();
-</script>
-<script src="header.js" defer></script>
+  <!-- Firebase/App logic extracted to external module for CSP compliance -->
+  <script type="module" src="/firebase-init.js"></script>
+  <script src="header.js" defer></script>
 </head>
 <body>
   <div id="header"></div>
@@ -229,21 +148,8 @@ function activerAjoutPanier() {
     </section>
 
   </main>
-  <script>
-    fetch('header.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('header').innerHTML = data;
-        if (typeof updateCartCount === 'function') updateCartCount();
-      });
-  </script>
   <div id="footer"></div>
-  <script>
-    fetch('footer.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('footer').innerHTML = data;
-      });
-  </script>
+  <!-- Layout loader extracted to external script for CSP compliance -->
+  <script src="/layout-loader.js" defer></script>
 </body>
 </html>

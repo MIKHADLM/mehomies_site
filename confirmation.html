@@ -80,6 +80,7 @@
       background: #333;
     }
   </style>
+  <script src="header.js" defer></script>
 </head>
 <body>
   <div id="header"></div>
@@ -93,60 +94,7 @@
   </main>
 
   <div id="footer"></div>
-
-  <!-- Scripts pour charger header et footer -->
-  <script>
-    // Charger le header
-    fetch('header.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('header').innerHTML = html;
-        if (typeof updateCartCount === 'function') updateCartCount();
-      })
-      .catch(err => console.error('Erreur chargement header:', err));
-
-    // Charger le footer
-    fetch('footer.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('footer').innerHTML = html;
-      })
-      .catch(err => console.error('Erreur chargement footer:', err));
-  </script>
-
-  <!-- Script Firebase avec gestion d'erreurs améliorée -->
-  <script type="module">
-  console.log('[DEBUG] Initialisation de la page confirmation via Cloud Function');
-
-  const params = new URLSearchParams(window.location.search);
-  const orderId = params.get('order_id');
-  const orderNumberEl = document.getElementById('order-number');
-
-  if (!orderId) {
-    console.error('[DEBUG] Aucun order_id trouvé dans l\'URL');
-    orderNumberEl.innerHTML = '<span class="error">Aucun numéro de commande trouvé dans l\'URL.</span>';
-  } else {
-    console.log('[DEBUG] Tentative de récupération de la commande via Cloud Function:', orderId);
-
-    fetch(`https://europe-west1-mehomiesstore.cloudfunctions.net/getOrderDetails?orderId=${orderId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.numeroCommande) {
-          orderNumberEl.innerHTML = `<span class="success">Votre numéro de commande : ${data.numeroCommande}</span>`;
-          // Vider le panier après confirmation
-          localStorage.removeItem('panier');
-          if (typeof updateCartCount === 'function') updateCartCount();
-          console.log('[DEBUG] Commande affichée avec succès via Cloud Function');
-        } else {
-          orderNumberEl.innerHTML = `<span class="error">${data.error || 'Commande introuvable.'}</span>`;
-          console.error('[DEBUG] Erreur renvoyée par la Cloud Function:', data.error);
-        }
-      })
-      .catch(err => {
-        console.error('[DEBUG] Erreur lors de l\'appel à getOrderDetails:', err);
-        orderNumberEl.innerHTML = `<span class="error">Erreur lors de la récupération de la commande.</span>`;
-      });
-  }
-</script>
+  <script src="layout-loader.js" defer></script>
+  <script src="confirmation.js" defer></script>
 </body>
 </html>
