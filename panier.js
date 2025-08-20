@@ -69,6 +69,11 @@ import { getAppCheckToken } from './appcheck.js';
         }
       }
 
+      // Enforce per-product maxpc across all cart lines of the same product id
+      const maxpc = typeof produitInfo.maxpc === 'number' ? produitInfo.maxpc : null;
+      const totalForProduct = panier.filter(it => it.id === p.id).reduce((s, it) => s + (it.quantite || 0), 0);
+      const remainingGlobal = maxpc ? Math.max(0, maxpc - totalForProduct) : Infinity;
+
       const tdNom = document.createElement('td');
       tdNom.style.display = "flex";
       tdNom.style.flexDirection = "column";
@@ -131,10 +136,11 @@ import { getAppCheckToken } from './appcheck.js';
       if (window.innerWidth <= 600) {
         const quantityMobile = document.createElement('div');
         quantityMobile.className = 'quantity-control-mobile';
+        const disablePlusMobile = (p.quantite >= stock) || (maxpc && remainingGlobal <= 0);
         quantityMobile.innerHTML = `
           <button class="moins" data-index="${index}">−</button>
           <span>${p.quantite}</span>
-          <button class="plus" data-index="${index}" ${p.quantite >= stock ? 'disabled' : ''}>+</button>
+          <button class="plus" data-index="${index}" ${disablePlusMobile ? 'disabled' : ''}>+</button>
         `;
         texteConteneur.appendChild(quantityMobile);
       }
@@ -150,7 +156,8 @@ import { getAppCheckToken } from './appcheck.js';
       tdPrix.textContent = `${p.prix.toFixed(2)} €`;
 
       const tdQuantite = document.createElement('td');
-      const disablePlus = p.quantite >= stock ? 'disabled' : '';
+      const disablePlusFlag = (p.quantite >= stock) || (maxpc && remainingGlobal <= 0);
+      const disablePlus = disablePlusFlag ? 'disabled' : '';
       tdQuantite.innerHTML = `
         <div class="quantity-control">
           <button class="moins" data-index="${index}">−</button>
@@ -180,7 +187,7 @@ import { getAppCheckToken } from './appcheck.js';
 
     if (e.target.classList.contains('plus')) {
       const index = e.target.dataset.index;
-      const produitInfo = catalogueProduits[panier[index].id];
+      const produitInfo = catalogueProduits[panier[index].id] || {};
       let stock = 99;
       if (produitInfo && produitInfo.stock !== undefined) {
         if (typeof produitInfo.stock === "object" && !Array.isArray(produitInfo.stock) && panier[index].taille) {
@@ -189,11 +196,17 @@ import { getAppCheckToken } from './appcheck.js';
           stock = produitInfo.stock;
         }
       }
-      if (panier[index].quantite < stock) {
+      // global max per product across cart
+      const maxpc = typeof produitInfo.maxpc === 'number' ? produitInfo.maxpc : null;
+      const totalForProduct = panier.filter(it => it.id === panier[index].id).reduce((s, it) => s + (it.quantite || 0), 0);
+      const remainingGlobal = maxpc ? Math.max(0, maxpc - totalForProduct) : Infinity;
+      if (panier[index].quantite < stock && remainingGlobal > 0) {
         panier[index].quantite++;
         localStorage.setItem('panier', JSON.stringify(panier));
         afficherPanier();
         if (typeof window.updateCartCount === 'function') window.updateCartCount();
+      } else if (maxpc && remainingGlobal <= 0) {
+        alert(`Limite par commande atteinte pour cet article (max ${maxpc}).`);
       }
     }
 
@@ -234,7 +247,8 @@ import { getAppCheckToken } from './appcheck.js';
         nom: p.nom,
         prix: p.prix,
         image: p.image,
-        stock: p.stock
+        stock: p.stock,
+        maxpc: typeof p.maxpc === 'number' ? p.maxpc : null
       };
     });
   }

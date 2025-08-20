@@ -1,5 +1,6 @@
 const getRawBody = require('raw-body');
 const { onRequest } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 const stripeSecret = defineSecret('STRIPE_SECRET_KEY');
@@ -82,23 +83,56 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
 
       // Reserve stock atomically and create order document in the same transaction
       let validatedItems = [];
-      const reservationMinutes = 30;
-      const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + reservationMinutes * 60 * 1000));
+      // default reservation minutes if products don't override
+      let minReservationMinutes = 30;
 
       await db.runTransaction(async (tx) => {
         // Validate each product and update stock
         validatedItems = [];
+        // Sum quantities per product to enforce per-product maxpc
+        const totalPerProduct = items.reduce((acc, it) => {
+          acc[it.id] = (acc[it.id] || 0) + (typeof it.quantite === 'number' ? it.quantite : 0);
+          return acc;
+        }, {});
+
+        // First pass: validate maxpc and collect reservation window
+        const productCache = new Map();
+        for (const productId of Object.keys(totalPerProduct)) {
+          const produitRef = db.collection('produits').doc(productId);
+          const snap = await tx.get(produitRef);
+          if (!snap.exists) {
+            throw new Error(`Produit avec l'id ${productId} introuvable.`);
+          }
+          const produitData = snap.data();
+          productCache.set(productId, { ref: produitRef, data: produitData });
+
+          // Enforce per-product maximum per order
+          const maxpc = typeof produitData.maxpc === 'number' && produitData.maxpc > 0 ? produitData.maxpc : null;
+          if (maxpc !== null && totalPerProduct[productId] > maxpc) {
+            const nom = produitData.nom || productId;
+            throw new Error(`Quantité maximale par commande atteinte pour le produit ${nom} (maximum: ${maxpc}).`);
+          }
+
+          // Collect reservation duration (take minimum across products)
+          const overrideMinutes = typeof produitData.reservationMinutes === 'number' && produitData.reservationMinutes > 0
+            ? Math.floor(produitData.reservationMinutes)
+            : null;
+          if (overrideMinutes) {
+            // clamp to avoid extreme values
+            const clamped = Math.max(3, Math.min(60, overrideMinutes));
+            minReservationMinutes = Math.min(minReservationMinutes, clamped);
+          }
+        }
+
+        // Second pass: per-line validations (prix/stock) and stock updates
         for (const item of items) {
           if (!item.id || typeof item.prix !== 'number' || typeof item.quantite !== 'number') {
             throw new Error('Produit invalide ou informations manquantes.');
           }
 
-          const produitRef = db.collection('produits').doc(item.id);
-          const snap = await tx.get(produitRef);
-          if (!snap.exists) {
-            throw new Error(`Produit avec l'id ${item.id} introuvable.`);
-          }
-          const produitData = snap.data();
+          const cached = productCache.get(item.id);
+          const produitRef = cached?.ref || db.collection('produits').doc(item.id);
+          const produitData = cached?.data || (await (async () => { const s = await tx.get(produitRef); if (!s.exists) throw new Error(`Produit avec l'id ${item.id} introuvable.`); return s.data(); })());
 
           // Prix exact requis
           if (produitData.prix !== item.prix) {
@@ -128,6 +162,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
         }
 
         // Create order as reserved
+        const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + minReservationMinutes * 60 * 1000));
         tx.set(orderRef, {
           items: validatedItems,
           isPickup,
@@ -477,6 +512,8 @@ exports.listProducts = onRequest({ region: 'europe-west1' }, async (req, res) =>
         image5: data.image5 || '',
         tailles: Array.isArray(data.tailles) ? data.tailles : [],
         stock: data.stock ?? 0,
+        maxpc: typeof data.maxpc === 'number' ? data.maxpc : null,
+        reservationMinutes: typeof data.reservationMinutes === 'number' ? data.reservationMinutes : null,
       };
     });
     return res.status(200).json({ produits });
@@ -516,9 +553,51 @@ exports.getProduct = onRequest({ region: 'europe-west1' }, async (req, res) => {
       image4: data.image4 || '',
       image5: data.image5 || '',
       stock: data.stock ?? 0,
+      maxpc: typeof data.maxpc === 'number' ? data.maxpc : null,
+      reservationMinutes: typeof data.reservationMinutes === 'number' ? data.reservationMinutes : null,
     });
   } catch (err) {
     console.error('getProduct error:', err.message);
     return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Scheduled cleanup: release reservations that exceeded our own expiresAt window
+exports.cleanupExpiredReservations = onSchedule({ schedule: 'every 1 minutes', region: 'europe-west1' }, async (event) => {
+  const now = admin.firestore.Timestamp.now();
+  const q = await db.collection('orders')
+    .where('status', '==', 'reserved')
+    .where('expiresAt', '<=', now)
+    .limit(50)
+    .get();
+  if (q.empty) return;
+  for (const doc of q.docs) {
+    const orderRef = doc.ref;
+    const data = doc.data();
+    const items = Array.isArray(data.items) ? data.items : [];
+    try {
+      await db.runTransaction(async (tx) => {
+        // restore stock per item
+        for (const item of items) {
+          const produitRef = db.collection('produits').doc(item.id);
+          const psnap = await tx.get(produitRef);
+          if (!psnap.exists) continue;
+          const produit = psnap.data();
+          if (typeof produit.stock === 'number') {
+            const actuel = produit.stock || 0;
+            tx.update(produitRef, { stock: actuel + (item.quantite || 0) });
+          } else if (typeof produit.stock === 'object' && item.taille) {
+            const stockParTaille = { ...(produit.stock || {}) };
+            const actuel = stockParTaille[item.taille] || 0;
+            stockParTaille[item.taille] = actuel + (item.quantite || 0);
+            tx.update(produitRef, { stock: stockParTaille });
+          }
+        }
+        tx.update(orderRef, { status: 'canceled', stockReserved: false, canceledAt: admin.firestore.FieldValue.serverTimestamp() });
+      });
+      console.log('Expired reservation cleaned:', orderRef.id);
+    } catch (e) {
+      console.error('Failed to clean reservation', orderRef.id, e.message);
+    }
   }
 });

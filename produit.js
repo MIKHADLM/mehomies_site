@@ -59,6 +59,7 @@ if (!produitId) {
         image4: data.image4,
         image5: data.image5,
         stock: data.stock ?? 0,
+        maxpc: typeof data.maxpc === 'number' ? data.maxpc : null,
       };
       const descriptionLines = (produit.description || "")
         .split(/\n+/)
@@ -174,6 +175,11 @@ if (!produitId) {
         document.getElementById("acheter-maintenant").disabled = true;
       }
 
+      function getTotalInCartForProduct() {
+        const panier = JSON.parse(localStorage.getItem("panier")) || [];
+        return panier.filter(p => p.id === produitId).reduce((s, p) => s + (p.quantite || 0), 0);
+      }
+
       document.getElementById("ajouter-panier").addEventListener("click", () => {
         if (quantite > currentStock) {
           alert("Quantité demandée supérieure au stock disponible.");
@@ -189,6 +195,14 @@ if (!produitId) {
           }
         }
         let panier = JSON.parse(localStorage.getItem("panier")) || [];
+        // Enforce per-product maxpc across the whole order
+        const totalInCart = getTotalInCartForProduct();
+        if (typeof produit.maxpc === 'number' && produit.maxpc > 0) {
+          if (totalInCart + quantite > produit.maxpc) {
+            alert(`Limite par commande atteinte pour cet article (max ${produit.maxpc}).`);
+            return;
+          }
+        }
         const produitExistant = panier.find(p =>
           p.id === produitId && (selectedTaille ? p.taille === selectedTaille : !p.taille)
         );
@@ -223,6 +237,15 @@ if (!produitId) {
           selectedTaille = selectTailleElem.value;
           if (!selectedTaille) {
             alert("Veuillez sélectionner une taille.");
+            return;
+          }
+        }
+
+        // Enforce per-product maxpc across the whole order
+        const totalInCart = getTotalInCartForProduct();
+        if (typeof produit.maxpc === 'number' && produit.maxpc > 0) {
+          if (totalInCart + quantite > produit.maxpc) {
+            alert(`Limite par commande atteinte pour cet article (max ${produit.maxpc}).`);
             return;
           }
         }
@@ -264,11 +287,18 @@ if (!produitId) {
       });
 
       document.getElementById("plus").addEventListener("click", () => {
-        if (quantite < currentStock) {
+        const totalInCart = getTotalInCartForProduct();
+        const remainingByMax = (typeof produit.maxpc === 'number' && produit.maxpc > 0) ? Math.max(0, produit.maxpc - totalInCart) : Infinity;
+        const hardLimit = Math.min(currentStock, remainingByMax);
+        if (quantite < hardLimit) {
           quantite++;
           document.getElementById("quantite").textContent = quantite;
         } else {
-          alert("Stock maximum atteint.");
+          if (remainingByMax !== Infinity && remainingByMax <= quantite) {
+            alert(`Limite par commande atteinte pour cet article (max ${produit.maxpc}).`);
+          } else {
+            alert("Stock maximum atteint.");
+          }
         }
       });
 
