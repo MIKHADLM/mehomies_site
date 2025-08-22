@@ -277,8 +277,10 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
 
       const items = Array.isArray(after.items) ? after.items : [];
       const itemsTotal = items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0);
-      const shippingCents = (typeof after.shippingFeeCents === 'number') ? after.shippingFeeCents : (after.isPickup ? 0 : 455);
-      const total = (itemsTotal + shippingCents / 100).toFixed(2);
+      const shippingCents = (typeof after.shippingFeeCents === 'number') ? after.shippingFeeCents : 0;
+      const total = (typeof after.totalCents === 'number')
+        ? (after.totalCents / 100).toFixed(2)
+        : (itemsTotal + shippingCents / 100).toFixed(2);
       const orderNumber = after.orderNumber || orderId;
       const customerName = after.customerName || after.name || '';
 
@@ -299,6 +301,7 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
             total,
             items: items.map(i => ({ name: i.nom || i.id, qty: i.quantite, price: i.prix })),
             firstName: customerName || 'Client',
+            shipping: shippingCents ? (shippingCents / 100).toFixed(2) : undefined,
           },
         };
         await api.sendTransacEmail(sendPayload);
@@ -310,6 +313,12 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
             <td style="padding:6px 8px;border:1px solid #eee;text-align:right;">${Number(i.prix).toFixed(2)} €</td>
           </tr>
         `).join('');
+        const shippingRow = shippingCents > 0 ? `
+          <tr>
+            <td colspan="2" style="padding:6px 8px;border:1px solid #eee;text-align:left;">Frais de port</td>
+            <td style="padding:6px 8px;border:1px solid #eee;text-align:right;">${(shippingCents / 100).toFixed(2)} €</td>
+          </tr>
+        ` : '';
         const html = `
           <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;color:#111;">
             <h1 style="margin:0 0 12px;">Merci pour ta commande</h1>
@@ -326,6 +335,7 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
               </thead>
               <tbody>
                 ${itemsRows}
+                ${shippingRow}
               </tbody>
             </table>
             <p style="font-size:16px;font-weight:700;">Total payé: ${total} €</p>
@@ -457,13 +467,20 @@ exports.stripeWebhook = onRequest(
         // Récupération des informations client
         const customerDetails = session.customer_details || {};
 
+        const amountTotalCents = typeof session.amount_total === 'number' ? session.amount_total : null;
+        const amountShippingCents = (session.total_details && typeof session.total_details.amount_shipping === 'number')
+          ? session.total_details.amount_shipping
+          : null;
+
         const updateData = {
           status: "paid",
           paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
           stripeSessionId: session.id,
           customerEmail: customerDetails.email || null,
           phoneNumber: customerDetails.phone || null,
-          customerName: customerDetails.name || null
+          customerName: customerDetails.name || null,
+          ...(amountTotalCents !== null && { totalCents: amountTotalCents }),
+          ...(amountShippingCents !== null && { shippingFeeCents: amountShippingCents })
         };
 
         if (shippingAddress) {
