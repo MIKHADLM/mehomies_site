@@ -1,9 +1,11 @@
 const getRawBody = require('raw-body');
 const { onRequest } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 const stripeSecret = defineSecret('STRIPE_SECRET_KEY');
+const brevoApiKey = defineSecret('BREVO_API_KEY');
 
 // Do not load dotenv in production functions; use Secret Manager instead
 // require('dotenv').config();
@@ -16,6 +18,14 @@ const db = admin.firestore();
 const getStripe = () => {
   const Stripe = require('stripe');
   return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
+
+// Lazy Brevo (Sendinblue) client factory using Secret Manager
+const getBrevo = (apiKey) => {
+  const Sib = require('sib-api-v3-sdk');
+  const client = Sib.ApiClient.instance;
+  client.authentications['api-key'].apiKey = apiKey;
+  return new Sib.TransactionalEmailsApi();
 };
 
 const ALLOWED_ORIGINS = [
@@ -233,6 +243,112 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
     }
     
 });
+
+// Firestore trigger: send transactional confirmation email when status transitions to paid
+// Path: orders/{orderId}
+exports.sendOrderConfirmationEmail = onDocumentUpdated(
+  {
+    region: 'europe-west1',
+    document: 'orders/{orderId}',
+    secrets: [brevoApiKey],
+    maxInstances: 20,
+    retry: false,
+  },
+  async (event) => {
+    try {
+      const before = event.data?.before?.data() || {};
+      const after = event.data?.after?.data() || {};
+      const orderId = event.params.orderId;
+
+      // Only send when order is paid, includes an orderNumber, and hasn't been sent yet.
+      const wasPaid = before.status === 'paid';
+      const isPaid = after.status === 'paid';
+      const hadOrderNumber = Boolean(before.orderNumber);
+      const hasOrderNumber = Boolean(after.orderNumber);
+      const alreadySent = Boolean(after.confirmationEmailSentAt);
+      if (!isPaid || alreadySent || !hasOrderNumber) return;
+      // Allow send either on the transition to paid OR when orderNumber appears after paid
+      if (!(before.status !== 'paid' || (!hadOrderNumber && hasOrderNumber))) return;
+
+      const toEmail = after.email || after.customerEmail;
+      if (!toEmail) return;
+
+      const items = Array.isArray(after.items) ? after.items : [];
+      const total = (
+        items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0) +
+        (after.shippingFeeCents ? after.shippingFeeCents / 100 : 0)
+      ).toFixed(2);
+      const orderNumber = after.orderNumber || orderId;
+      const customerName = after.customerName || after.name || '';
+
+      const apiKey = brevoApiKey.value();
+      const api = getBrevo(apiKey);
+
+      const tmplIdRaw = process.env.BREVO_TEMPLATE_ID;
+      const templateId = tmplIdRaw ? Number(tmplIdRaw) : null;
+
+      if (templateId && !Number.isNaN(templateId)) {
+        const sendPayload = {
+          to: [{ email: toEmail, name: customerName || undefined }],
+          sender: { email: 'contact@mehomies.com', name: 'Mehomies' },
+          replyTo: { email: 'contact@mehomies.com', name: 'Mehomies' },
+          templateId,
+          params: {
+            orderNumber,
+            total,
+            items: items.map(i => ({ name: i.nom || i.id, qty: i.quantite, price: i.prix })),
+            firstName: customerName || 'Client',
+          },
+        };
+        await api.sendTransacEmail(sendPayload);
+      } else {
+        const itemsRows = items.map(i => `
+          <tr>
+            <td style="padding:6px 8px;border:1px solid #eee;">${(i.nom || i.id)}</td>
+            <td style="padding:6px 8px;border:1px solid #eee;text-align:center;">${i.quantite || 0}</td>
+            <td style="padding:6px 8px;border:1px solid #eee;text-align:right;">${Number(i.prix).toFixed(2)} €</td>
+          </tr>
+        `).join('');
+        const html = `
+          <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;color:#111;">
+            <h1 style="margin:0 0 12px;">Merci pour ta commande</h1>
+            <p>Bonjour ${customerName || 'Mehomies'},</p>
+            <p>Nous avons bien reçu ta commande. Voici le récapitulatif:</p>
+            <p style="font-weight:600">Numéro de commande: ${orderNumber}</p>
+            <table style="border-collapse:collapse;width:100%;max-width:640px;margin:8px 0;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:6px 8px;border:1px solid #eee;background:#fafafa;">Article</th>
+                  <th style="text-align:center;padding:6px 8px;border:1px solid #eee;background:#fafafa;">Qté</th>
+                  <th style="text-align:right;padding:6px 8px;border:1px solid #eee;background:#fafafa;">Prix</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows}
+              </tbody>
+            </table>
+            <p style="font-size:16px;font-weight:700;">Total payé: ${total} €</p>
+            <p>Merci pour ta confiance.<br/>L’équipe Mehomies</p>
+          </div>
+        `;
+        const sendPayload = {
+          to: [{ email: toEmail, name: customerName || undefined }],
+          sender: { email: 'contact@mehomies.com', name: 'Mehomies' },
+          replyTo: { email: 'contact@mehomies.com', name: 'Mehomies' },
+          subject: `Confirmation de commande ${orderNumber} – Mehomies`,
+          htmlContent: html,
+        };
+        await api.sendTransacEmail(sendPayload);
+      }
+
+      // Mark as sent (idempotency)
+      await db.collection('orders').doc(orderId).set({ confirmationEmailSentAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      console.log('Order confirmation email sent for order', orderId);
+    } catch (err) {
+      console.error('sendOrderConfirmationEmail error:', err.message);
+    }
+  }
+);
 
 exports.stripeWebhook = onRequest(
   {
