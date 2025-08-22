@@ -176,6 +176,8 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
         tx.set(orderRef, {
           items: validatedItems,
           isPickup,
+          // Persist shipping fee for downstream uses (emails, dashboards)
+          shippingFeeCents: isPickup ? 0 : 455,
           status: 'reserved',
           stockReserved: true,
           reservedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -274,10 +276,9 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
       if (!toEmail) return;
 
       const items = Array.isArray(after.items) ? after.items : [];
-      const total = (
-        items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0) +
-        (after.shippingFeeCents ? after.shippingFeeCents / 100 : 0)
-      ).toFixed(2);
+      const itemsTotal = items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0);
+      const shippingCents = (typeof after.shippingFeeCents === 'number') ? after.shippingFeeCents : (after.isPickup ? 0 : 455);
+      const total = (itemsTotal + shippingCents / 100).toFixed(2);
       const orderNumber = after.orderNumber || orderId;
       const customerName = after.customerName || after.name || '';
 
