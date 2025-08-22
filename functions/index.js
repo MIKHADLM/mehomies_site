@@ -277,7 +277,11 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
 
       const items = Array.isArray(after.items) ? after.items : [];
       const itemsTotal = items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0);
-      const shippingCents = (typeof after.shippingFeeCents === 'number') ? after.shippingFeeCents : 0;
+      const knownShippingCents = (typeof after.shippingFeeCents === 'number') ? after.shippingFeeCents : null;
+      const derivedShippingCents = (typeof after.totalCents === 'number')
+        ? Math.max(0, Math.round(after.totalCents - Math.round(itemsTotal * 100)))
+        : null;
+      const shippingCents = (knownShippingCents !== null) ? knownShippingCents : (derivedShippingCents || 0);
       const total = (typeof after.totalCents === 'number')
         ? (after.totalCents / 100).toFixed(2)
         : (itemsTotal + shippingCents / 100).toFixed(2);
