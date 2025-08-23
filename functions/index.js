@@ -207,8 +207,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
           product_data: {
             name: item.nom,
           },
-          // Stripe requires integer cents; guard against float precision
-          unit_amount: Math.round(item.prix * 100),
+          unit_amount: item.prix * 100,
         },
         quantity: item.quantite,
       }));
@@ -255,14 +254,10 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
 
       res.status(200).json({ url: session.url, orderId: orderRef.id });
     } catch (error) {
-      console.error('createCheckoutSession error:', error);
+      console.error('createCheckoutSession error:', error.message);
       // Surface validation errors
       if (typeof error.message === 'string' && /Quantité insuffisante|introuvable|invalide|prix/.test(error.message)) {
         return res.status(400).json({ error: error.message });
-      }
-      // Surface Stripe parameter errors (e.g., invalid integer for unit_amount)
-      if (error && (error.type === 'StripeInvalidRequestError' || /unit_amount|invalid/i.test(String(error.message)))) {
-        return res.status(400).json({ error: error.message || 'Paramètre Stripe invalide' });
       }
       res.status(500).json({ error: 'Erreur lors de la création de la session Stripe' });
     }
