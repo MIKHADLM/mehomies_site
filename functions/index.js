@@ -28,14 +28,6 @@ const getBrevo = (apiKey) => {
   return new Sib.TransactionalEmailsApi();
 };
 
-// Brevo Contacts API helper
-const getBrevoContacts = (apiKey) => {
-  const Sib = require('sib-api-v3-sdk');
-  const client = Sib.ApiClient.instance;
-  client.authentications['api-key'].apiKey = apiKey;
-  return new Sib.ContactsApi();
-};
-
 const ALLOWED_ORIGINS = [
   'https://www.mehomies.com',
   'https://mehomies.com',
@@ -242,10 +234,6 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
         },
         shipping_address_collection: {
           allowed_countries: ['FR'], // always collect shipping address, even for pickup
-        },
-        // Show Stripe's native promotions consent checkbox (unchecked by default)
-        consent_collection: {
-          promotions: 'auto',
         },
         customer_email: req.body.email,
       }, { idempotencyKey: orderRef.id });
@@ -516,9 +504,6 @@ exports.stripeWebhook = onRequest(
           ? session.total_details.amount_shipping
           : null;
 
-        // Newsletter consent from Stripe Checkout (promotions)
-        const newsletterConsent = session.consent && session.consent.promotions === 'opt_in';
-
         const updateData = {
           status: "paid",
           paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -526,7 +511,6 @@ exports.stripeWebhook = onRequest(
           customerEmail: customerDetails.email || null,
           phoneNumber: customerDetails.phone || null,
           customerName: customerDetails.name || null,
-          newsletterConsent: Boolean(newsletterConsent),
           ...(amountTotalCents !== null && { totalCents: amountTotalCents }),
           ...(amountShippingCents !== null && { shippingFeeCents: amountShippingCents })
         };
@@ -548,33 +532,35 @@ exports.stripeWebhook = onRequest(
         await orderRef.set(updateData, { merge: true });
         console.log("Commande mise à jour à paid :", metadata.orderId);
 
-        // If consent given, subscribe the customer to Brevo list (if configured)
-        try {
-          if (newsletterConsent && customerDetails.email) {
-            const apiKey = brevoApiKey.value();
-            const contactsApi = getBrevoContacts(apiKey);
-            const listIdRaw = process.env.BREVO_LIST_ID;
-            const listId = listIdRaw ? Number(listIdRaw) : null;
-            // Derive a first name from full name when possible
-            const fullName = customerDetails.name || '';
-            const derivedFirst = fullName.split(/\s+/)[0] || undefined;
+        // Gestion du numéro de commande automatique (version corrigée)
+        const currentYear = new Date().getFullYear().toString();
+        const counterRef = db.collection("Counter").doc("Orders");
 
-            if (listId && !Number.isNaN(listId)) {
-              const payload = {
-                email: customerDetails.email,
-                attributes: { FIRSTNAME: derivedFirst },
-                listIds: [listId],
-                updateEnabled: true, // upsert behavior
-              };
-              await contactsApi.createContact(payload);
-              console.log('Brevo: contact subscribed with consent to list', listId);
-            } else {
-              console.log('Brevo list ID not configured; skip subscription');
-            }
+        await db.runTransaction(async (transaction) => {
+          const counterDoc = await transaction.get(counterRef);
+          let sequences = 0;
+          let yearStored = currentYear;
+
+          if (counterDoc.exists) {
+            const data = counterDoc.data();
+            // Assurez-vous que les noms de champs correspondent exactement à votre Firestore
+            sequences = data.Sequences || 0;
+            yearStored = data.Year || currentYear;
           }
-        } catch (e) {
-          console.error('Brevo subscribe error:', e.message);
-        }
+
+          // Si l'année a changé, on remet la séquence à zéro
+          if (yearStored !== currentYear) {
+            sequences = 0;
+            yearStored = currentYear;
+          }
+
+          sequences += 1;
+          const orderNumber = `MEH-${currentYear}-${sequences.toString().padStart(3, '0')}`;
+
+          // Mettre à jour le compteur et la commande
+          transaction.set(counterRef, { Year: yearStored, Sequences: sequences }, { merge: true });
+          transaction.update(orderRef, { orderNumber });
+        });
       }
     }
 
