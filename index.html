@@ -159,9 +159,14 @@
       padding: 4px; /* breathing room around image */
     }
 
-    .product-card h3 {
-      margin: 0.35rem 0 0.1rem; /* even tighter spacing above price */
+    /* Product title actually rendered as h4 from firebase-init.js */
+    .product-card h4 {
+      margin: 0.25rem 0 0.05rem; /* much tighter spacing above price */
       font-weight: 600;
+    }
+    /* Ensure the price is glued under the title */
+    .product-card h4 + p {
+      margin-top: 0.02rem;
     }
 
     .product-card p {
