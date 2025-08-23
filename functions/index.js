@@ -295,7 +295,21 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
       const derivedShippingCents = (typeof after.totalCents === 'number')
         ? Math.max(0, Math.round(after.totalCents - Math.round(itemsTotal * 100)))
         : null;
-      const shippingCents = (knownShippingCents !== null) ? knownShippingCents : (derivedShippingCents || 0);
+      // Prefer a positive derived shipping if known is 0, to avoid missing row when known was incorrectly 0
+      const shippingCents = Math.max(
+        Number.isFinite(knownShippingCents) ? knownShippingCents : 0,
+        Number.isFinite(derivedShippingCents) ? derivedShippingCents : 0
+      );
+
+      console.log('Email totals debug', {
+        orderId,
+        itemsTotalEuros: itemsTotal,
+        totalCents: after.totalCents,
+        knownShippingCents,
+        derivedShippingCents,
+        shippingCents,
+        isPickup: after.isPickup,
+      });
       const total = (typeof after.totalCents === 'number')
         ? (after.totalCents / 100).toFixed(2)
         : (itemsTotal + shippingCents / 100).toFixed(2);
