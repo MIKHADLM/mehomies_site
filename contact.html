@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Contact - MEHOMIES</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="header.js" defer></script>
+  <script src="/layout-loader.js" defer></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -80,20 +82,5 @@
   </main>
 
   <div id="footer"></div>
-
-  <script>
-    fetch('header.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('header').innerHTML = html;
-        if (typeof updateCartCount === 'function') updateCartCount();
-      });
-
-    fetch('footer.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('footer').innerHTML = html;
-      });
-  </script>
 </body>
 </html>
