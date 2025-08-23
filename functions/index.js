@@ -235,21 +235,6 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
         shipping_address_collection: {
           allowed_countries: ['FR'], // always collect shipping address, even for pickup
         },
-        // Custom fields to collect first and last name separately on Checkout
-        custom_fields: [
-          {
-            key: 'first_name',
-            label: { type: 'custom', custom: 'Prénom' },
-            type: 'text',
-            optional: false,
-          },
-          {
-            key: 'last_name',
-            label: { type: 'custom', custom: 'Nom' },
-            type: 'text',
-            optional: false,
-          },
-        ],
         customer_email: req.body.email,
       }, { idempotencyKey: orderRef.id });
 
@@ -347,7 +332,7 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
             orderNumber,
             total,
             items: items.map(i => ({ name: i.nom || i.id, qty: i.quantite, price: i.prix })),
-            firstName: after.firstName || customerName || 'Client',
+            firstName: customerName || 'Client',
             shipping: shippingCents ? (shippingCents / 100).toFixed(2) : undefined,
           },
         };
@@ -507,12 +492,6 @@ exports.stripeWebhook = onRequest(
         state: session.customer_details.address.state || ''
       } : null;
 
-      // Extract custom fields for first and last name if present
-      const customFieldsArr = Array.isArray(session.custom_fields) ? session.custom_fields : [];
-      const findField = (k) => customFieldsArr.find(f => f && f.key === k);
-      const firstNameFromCF = (findField('first_name') && findField('first_name').text && findField('first_name').text.value) || null;
-      const lastNameFromCF = (findField('last_name') && findField('last_name').text && findField('last_name').text.value) || null;
-
       // Mise à jour du statut de la commande en "paid"
       if (metadata.orderId) {
         const orderRef = db.collection("orders").doc(metadata.orderId);
@@ -531,12 +510,7 @@ exports.stripeWebhook = onRequest(
           stripeSessionId: session.id,
           customerEmail: customerDetails.email || null,
           phoneNumber: customerDetails.phone || null,
-          // Prefer separate names if supplied via custom_fields
-          firstName: firstNameFromCF || null,
-          lastName: lastNameFromCF || null,
-          customerName: (firstNameFromCF && lastNameFromCF)
-            ? `${firstNameFromCF} ${lastNameFromCF}`
-            : (customerDetails.name || null),
+          customerName: customerDetails.name || null,
           ...(amountTotalCents !== null && { totalCents: amountTotalCents }),
           ...(amountShippingCents !== null && { shippingFeeCents: amountShippingCents })
         };
