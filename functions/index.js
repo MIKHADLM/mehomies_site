@@ -281,6 +281,14 @@ exports.sendOrderConfirmationEmail = onDocumentUpdated(
       const toEmail = after.email || after.customerEmail;
       if (!toEmail) return;
 
+      // Guard: wait until totals are fully written by webhook
+      const hasTotalCents = typeof after.totalCents === 'number';
+      const hasPositiveShipping = typeof after.shippingFeeCents === 'number' && after.shippingFeeCents > 0;
+      if (!(hasTotalCents || hasPositiveShipping)) {
+        console.log('Deferring email send until totals available', { orderId, hasTotalCents, shippingFeeCents: after.shippingFeeCents });
+        return;
+      }
+
       const items = Array.isArray(after.items) ? after.items : [];
       const itemsTotal = items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0);
       const knownShippingCents = (typeof after.shippingFeeCents === 'number') ? after.shippingFeeCents : null;
