@@ -85,6 +85,12 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
       const items = req.body.items;
       const isPickup = req.body.isPickup; // boolean indicating if "remise en main propre" is checked
 
+      // Load shipping settings from Firestore (admin-configurable)
+      const settingsSnap = await db.collection('settings').doc('shipping').get();
+      const settingsData = settingsSnap.exists ? settingsSnap.data() : {};
+      const defaultFeeCents = (typeof settingsData?.defaultFeeCents === 'number') ? settingsData.defaultFeeCents : 455;
+      const configuredShippingCents = isPickup ? 0 : defaultFeeCents;
+
       if (!Array.isArray(items)) {
         return res.status(400).json({ error: 'Le champ items doit être un tableau.' });
       }
@@ -177,7 +183,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
           items: validatedItems,
           isPickup,
           // Persist shipping fee for downstream uses (emails, dashboards)
-          shippingFeeCents: isPickup ? 0 : 455,
+          shippingFeeCents: configuredShippingCents,
           status: 'reserved',
           stockReserved: true,
           reservedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -204,7 +210,7 @@ exports.createCheckoutSession = onRequest({ region: 'europe-west1', secrets: [st
           price_data: {
             currency: 'eur',
             product_data: { name: 'Frais de port Colissimo' },
-            unit_amount: 455, // 4.55 euros in cents
+            unit_amount: configuredShippingCents, // Admin-configured shipping
           },
           quantity: 1,
         });
