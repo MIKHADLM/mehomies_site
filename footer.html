@@ -3,9 +3,16 @@
     <div>
       <h4>À propos de nous</h4>
         <p>
-          MEHOMIES, c'est une façon de célébrer les gens qui nous entoure, qui nous soutienne. 
+          MEHOMIES, c'est une façon de célébrer les gens qui nous entourent, qui nous soutiennent. 
           En esperant qu'à travers ce projet, je puisse vivre de bons et vrais moments avec mes homies.
         </p>
+        <div class="newsletter-signup">
+          <form id="newsletter-form" novalidate>
+            <input type="email" id="newsletter-email" name="email" placeholder="Donne-nous ton mail pour rester informé de nos sorties et évènements." required>
+            <button type="submit">S'inscrire</button>
+          </form>
+          <div id="newsletter-feedback" role="status" aria-live="polite"></div>
+        </div>
     </div>
     <div>
       <h4>En savoir plus</h4>
@@ -21,14 +28,6 @@
     <a href="#"><img src="Assets/instagram.svg" alt="Instagram" /></a>
     <a href="#"><img src="Assets/tiktok.svg" alt="TikTok" /></a>
   </div>
-  <div class="newsletter-signup">
-    <p>Donne-nous ton email pour rester informé de nos sorties et évènements.</p>
-    <form id="newsletter-form" novalidate>
-      <input type="email" id="newsletter-email" name="email" placeholder="ton@email" required>
-      <button type="submit">S'inscrire</button>
-    </form>
-    <div id="newsletter-feedback" role="status" aria-live="polite"></div>
-  </div>
   <p style="text-align: center;">© 2025 MEHOMIES. Tous droits réservés.</p>
 </footer>
 
@@ -40,15 +39,26 @@
   }
   .footer-top {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(4, 1fr); /* 4-column grid */
+    gap: 2rem;
+    align-items: start;
+    padding: 0 1rem; /* base padding on small screens */
+  }
+  .footer-top > div:first-child p {
+    text-align: justify;
+    hyphens: auto;
   }
   .footer-top > div:first-child {
-    grid-column: span 2;
-    padding-left: 4rem;
+    grid-column: 1 / span 2; /* occupy first two columns */
+    padding-left: 0;         /* no large left indent */
   }
   .footer-top > div:nth-child(2) {
-    grid-column: 4;
+    grid-column: 4; /* force to 4th column, leaving 3rd empty */
+  }
+
+  /* Increase horizontal padding on desktop to avoid sticking to screen edge */
+  @media (min-width: 900px) {
+    .footer-top { padding: 0 2.5rem; }
   }
   .footer-social {
     display: flex;
@@ -75,36 +85,41 @@
     height: 24px;
   }
   .newsletter-signup {
-    max-width: 560px;
-    margin: 1rem auto 0;
-    padding: 0 1rem;
-    text-align: center;
+    width: 100%;
+    max-width: none;     /* allow full column width */
+    margin: 1rem 0 0;
+    padding: 0;          /* no extra right padding so edges align */
+    text-align: left;
   }
   .newsletter-signup p { margin: 0 0 0.5rem; }
   #newsletter-form {
     display: flex;
     gap: 0.5rem;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%; /* span full column width so button aligns with paragraph end */
   }
   #newsletter-email {
-    flex: 1 1 320px;
-    max-width: 420px;
-    padding: 0.6rem 0.8rem;
-    border-radius: 6px;
+    flex: 1 1 auto;   /* grow to fill remaining space */
+    max-width: none;  /* no cap so button reaches container edge */
+    padding: 0.8rem 1rem;
+    border-radius: 9999px; /* pill */
     border: 1px solid #333;
     background: #111;
     color: #fff;
   }
   #newsletter-email::placeholder { color: #bbb; }
   #newsletter-form button {
-    padding: 0.6rem 1rem;
-    border-radius: 6px;
+    padding: 0.8rem 1.4rem; /* pill height to match input */
+    border-radius: 9999px;  /* pill */
     border: 1px solid #fff;
-    background: #fff;
-    color: #000;
+    background: #fff;        /* inverted */
+    color: #000;             /* inverted */
     font-weight: 700;
+    transition: background 0.2s ease;
     cursor: pointer;
   }
+  #newsletter-form button:hover { background: #f2f2f2; }
   #newsletter-form button:disabled { opacity: 0.6; cursor: default; }
   #newsletter-feedback { margin-top: 0.5rem; font-size: 0.95rem; }
   @media (max-width: 600px) {
