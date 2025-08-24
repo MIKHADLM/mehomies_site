@@ -767,3 +767,63 @@ exports.cleanupExpiredReservations = onSchedule({ schedule: 'every 1 minutes', r
     }
   }
 });
+
+// Public HTTPS function to subscribe an email to Brevo list (ID 4)
+// Requires App Check or Auth, and enforces CORS from allowed origins
+exports.subscribeNewsletter = onRequest({ region: 'europe-west1', secrets: [brevoApiKey] }, async (req, res) => {
+  const origin = req.headers.origin;
+  setCors(res, origin);
+  if (req.method === 'OPTIONS') return res.status(204).send('');
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  try {
+    // Require Auth or App Check
+    const authContext = await verifyAuthOrAppCheck(req);
+    if (!authContext) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const email = (req.body && typeof req.body.email === 'string') ? String(req.body.email).trim() : '';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Email invalide' });
+    }
+
+    // Init Brevo Contacts API
+    const Sib = require('sib-api-v3-sdk');
+    const apiKey = brevoApiKey.value();
+    const client = Sib.ApiClient.instance;
+    client.authentications['api-key'].apiKey = apiKey;
+    const contactsApi = new Sib.ContactsApi();
+
+    // Upsert contact into list 4
+    const payload = {
+      email,
+      listIds: [4],
+      updateEnabled: true,
+    };
+
+    try {
+      await contactsApi.createContact(payload);
+    } catch (e) {
+      // If contact exists and updateEnabled didn't take effect due to API nuance,
+      // fall back to add existing contact to list
+      try {
+        await contactsApi.addContactToList(4, { emails: [email] });
+      } catch (inner) {
+        console.error('Brevo subscribe failed:', inner.message || inner);
+        return res.status(500).json({ error: 'Impossible de vous inscrire pour le moment' });
+      }
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('subscribeNewsletter error:', err.message);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});

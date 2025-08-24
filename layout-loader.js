@@ -21,6 +21,10 @@
       const footerEl = document.getElementById('footer');
       if (footerEl) {
         footerEl.innerHTML = data;
+        // Notify listeners that footer content has been injected
+        try { document.dispatchEvent(new CustomEvent('footer:loaded')); } catch(_) {}
+        // Lazy-load newsletter logic once footer is present
+        try { import('/newsletter.js'); } catch(_) {}
       }
     })
     .catch(() => {});
