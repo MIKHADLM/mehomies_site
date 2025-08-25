@@ -1,21 +1,57 @@
 // Mobile accordion behavior for footer sections
 (function () {
   function setupAccordion() {
-    const accordions = Array.from(document.querySelectorAll('#footer .accordion'));
+    const root = document.getElementById('footer');
+    if (!root) return;
+    const accordions = Array.from(root.querySelectorAll('.accordion'));
     if (!accordions.length) return;
 
     // Helper: is mobile viewport
     const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
+
+    // Helpers to find elements
+    const getFooterTop = () => root.querySelector('.footer-top');
+    const getAboutPanel = () => root.querySelector('#about .accordion-panel');
+    const getMoreAccordion = () => root.querySelector('#more');
+    const getNewsletter = () => root.querySelector('.newsletter-signup');
+
+    // Reposition newsletter depending on viewport
+    function placeNewsletterForViewport() {
+      const newsletter = getNewsletter();
+      const footerTop = getFooterTop();
+      if (!newsletter || !footerTop) return;
+
+      if (isMobile()) {
+        // Move newsletter to be a separate block after #more
+        const more = getMoreAccordion();
+        if (more && newsletter.parentElement !== footerTop) {
+          // Insert after #more
+          if (more.nextSibling) {
+            footerTop.insertBefore(newsletter, more.nextSibling);
+          } else {
+            footerTop.appendChild(newsletter);
+          }
+        }
+      } else {
+        // Move newsletter inside About panel, directly after its paragraph
+        const aboutPanel = getAboutPanel();
+        if (aboutPanel && newsletter.parentElement !== aboutPanel) {
+          aboutPanel.appendChild(newsletter);
+        }
+      }
+    }
 
     // Initialize: ensure closed on mobile, open state controlled by CSS on desktop
     function applyInitialState() {
       if (!isMobile()) {
         // Remove JS-driven classes on desktop to let CSS handle open state
         accordions.forEach(acc => acc.classList.remove('open'));
+        placeNewsletterForViewport();
         return;
       }
       // Start collapsed on mobile
       accordions.forEach(acc => acc.classList.remove('open'));
+      placeNewsletterForViewport();
     }
 
     function toggle(acc) {

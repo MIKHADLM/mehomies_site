@@ -7,6 +7,13 @@
           MEHOMIES, c'est une façon de célébrer les gens qui nous entourent, qui nous soutiennent. 
           En esperant qu'à travers ce projet, je puisse vivre de bons et vrais moments avec mes homies.
         </p>
+        <div class="newsletter-signup">
+          <form id="newsletter-form" novalidate>
+            <input type="email" id="newsletter-email" name="email" placeholder="Donne-nous ton mail pour rester informé de nos sorties et évènements." required>
+            <button type="submit">S'inscrire</button>
+          </form>
+          <div id="newsletter-feedback" role="status" aria-live="polite"></div>
+        </div>
       </div>
     </div>
     <div class="accordion" id="more">
@@ -20,13 +27,7 @@
         </ul>
       </div>
     </div>
-    <div class="newsletter-signup">
-      <form id="newsletter-form" novalidate>
-        <input type="email" id="newsletter-email" name="email" placeholder="Donne-nous ton mail pour rester informé de nos sorties et évènements." required>
-        <button type="submit">S'inscrire</button>
-      </form>
-      <div id="newsletter-feedback" role="status" aria-live="polite"></div>
-    </div>
+    
   </div>
   <div class="footer-social">
     <a href="#"><img src="Assets/instagram.svg" alt="Instagram" /></a>
@@ -55,17 +56,15 @@
   /* Grid placement on desktop */
   #about { grid-column: 1 / span 2; padding-left: 0; }
   #more  { grid-column: 4; }
-  .newsletter-signup { grid-column: 1 / span 2; }
 
-  /* Increase horizontal padding on desktop to avoid sticking to screen edge */
-  @media (min-width: 900px) {
-    .footer-top { padding: 0 2.5rem; }
+  /* Desktop/tablet (>=601px): open panels and hide arrows */
+  @media (min-width: 601px) {
+    .footer-top { padding: 0 2.5rem; column-gap: 2rem; }
     /* Ensure panels are always open on desktop */
     .accordion-panel { max-height: none !important; opacity: 1 !important; overflow: visible; }
     .accordion-arrow { transform: rotate(0deg); display: none; }
     .accordion-title { cursor: default; }
-    /* Tighter visual link between About paragraph and newsletter */
-    #about .accordion-panel { margin-bottom: 0.5rem; }
+    /* Newsletter directly under paragraph */
     .newsletter-signup { margin-top: 0.25rem; }
   }
 
@@ -77,7 +76,7 @@
     cursor: pointer;
     user-select: none;
   }
-  .accordion-arrow { transition: transform 0.2s ease; display: inline-block; }
+  .accordion-arrow { transition: transform 0.2s ease; display: none; }
   .accordion.open .accordion-arrow { transform: rotate(180deg); }
   .accordion-panel {
     overflow: hidden;
@@ -87,13 +86,15 @@
   }
   .accordion.open .accordion-panel { max-height: 600px; opacity: 1; }
 
-  /* Mobile behavior: stack columns and make accordion collapsed by default */
+  /* Mobile behavior: stack columns and enable accordion UI */
   @media (max-width: 600px) {
     .footer-top {
       grid-template-columns: 1fr;
       padding: 0 1rem;
     }
     #about, #more, .newsletter-signup { grid-column: auto; }
+    .accordion-arrow { display: inline-block; }
+    .accordion-title { cursor: pointer; }
     /* Start collapsed on mobile; JS will control open state */
   }
   .footer-social {
@@ -123,7 +124,7 @@
   .newsletter-signup {
     width: 100%;
     max-width: none;     /* allow full column width */
-    margin: 1rem 0 0;
+    margin: 0.25rem 0 0; /* minimal space under paragraph */
     padding: 0;          /* no extra right padding so edges align */
     text-align: left;
   }
