@@ -1,7 +1,7 @@
 <footer>
   <div class="footer-top">
     <div class="accordion" id="about">
-      <h4 class="accordion-title" tabindex="0">À propos de nous <span class="accordion-arrow" aria-hidden="true">▾</span></h4>
+      <h4 class="accordion-title" tabindex="0">Qui sommes-nous ? <span class="accordion-arrow" aria-hidden="true">▾</span></h4>
       <div class="accordion-panel">
         <p>
           MEHOMIES, c'est une façon de célébrer les gens qui nous entourent, qui nous soutiennent. 
@@ -98,30 +98,6 @@
     .accordion-title { cursor: pointer; margin: 0; }
     .accordion { margin: 0; }
     /* Start collapsed on mobile; JS will control open state */
-  }
-
-  /* Mobile responsiveness: stack columns and allow form to wrap */
-  @media (max-width: 600px) {
-    .footer-top {
-      grid-template-columns: 1fr; /* stack About and Links */
-      padding: 0 1rem;            /* comfortable side padding */
-    }
-    .footer-top > div:first-child,
-    .footer-top > div:nth-child(2) {
-      grid-column: auto;          /* reset manual placements */
-    }
-    /* Newsletter form: stack input and button to avoid overflow */
-    #newsletter-form {
-      flex-wrap: wrap;
-    }
-    #newsletter-email {
-      flex: 1 1 100%;
-      width: 100%;
-    }
-    #newsletter-form button {
-      width: 100%;
-      margin-top: 0.5rem;
-    }
   }
   .footer-social {
     display: flex;
