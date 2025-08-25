@@ -25,6 +25,8 @@
         try { document.dispatchEvent(new CustomEvent('footer:loaded')); } catch(_) {}
         // Lazy-load newsletter logic once footer is present
         try { import('/newsletter.js'); } catch(_) {}
+        // Lazy-load footer accordion behavior for mobile
+        try { import('/footer-accordion.js'); } catch(_) {}
       }
     })
     .catch(() => {});

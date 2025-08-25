@@ -1,27 +1,31 @@
 <footer>
   <div class="footer-top">
-    <div>
-      <h4>À propos de nous</h4>
+    <div class="accordion" id="about">
+      <h4 class="accordion-title" tabindex="0">À propos de nous <span class="accordion-arrow" aria-hidden="true">▾</span></h4>
+      <div class="accordion-panel">
         <p>
           MEHOMIES, c'est une façon de célébrer les gens qui nous entourent, qui nous soutiennent. 
           En esperant qu'à travers ce projet, je puisse vivre de bons et vrais moments avec mes homies.
         </p>
-        <div class="newsletter-signup">
-          <form id="newsletter-form" novalidate>
-            <input type="email" id="newsletter-email" name="email" placeholder="Donne-nous ton mail pour rester informé de nos sorties et évènements." required>
-            <button type="submit">S'inscrire</button>
-          </form>
-          <div id="newsletter-feedback" role="status" aria-live="polite"></div>
-        </div>
+      </div>
     </div>
-    <div>
-      <h4>En savoir plus</h4>
-      <ul>
-        <li><a href="conditions-vente.html">CGV</a></li>
-        <li><a href="expédition.html">Politique d'expédition</a></li>
-        <li><a href="remboursement.html">Politique de remboursement</a></li>
-        <li><a href="contact.html">Nous contacter</a></li>
-      </ul>
+    <div class="accordion" id="more">
+      <h4 class="accordion-title" tabindex="0">En savoir plus <span class="accordion-arrow" aria-hidden="true">▾</span></h4>
+      <div class="accordion-panel">
+        <ul>
+          <li><a href="conditions-vente.html">CGV</a></li>
+          <li><a href="expédition.html">Politique d'expédition</a></li>
+          <li><a href="remboursement.html">Politique de remboursement</a></li>
+          <li><a href="contact.html">Nous contacter</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="newsletter-signup">
+      <form id="newsletter-form" novalidate>
+        <input type="email" id="newsletter-email" name="email" placeholder="Donne-nous ton mail pour rester informé de nos sorties et évènements." required>
+        <button type="submit">S'inscrire</button>
+      </form>
+      <div id="newsletter-feedback" role="status" aria-live="polite"></div>
     </div>
   </div>
   <div class="footer-social">
@@ -48,17 +52,49 @@
     text-align: justify;
     hyphens: auto;
   }
-  .footer-top > div:first-child {
-    grid-column: 1 / span 2; /* occupy first two columns */
-    padding-left: 0;         /* no large left indent */
-  }
-  .footer-top > div:nth-child(2) {
-    grid-column: 4; /* force to 4th column, leaving 3rd empty */
-  }
+  /* Grid placement on desktop */
+  #about { grid-column: 1 / span 2; padding-left: 0; }
+  #more  { grid-column: 4; }
+  .newsletter-signup { grid-column: 1 / span 2; }
 
   /* Increase horizontal padding on desktop to avoid sticking to screen edge */
   @media (min-width: 900px) {
     .footer-top { padding: 0 2.5rem; }
+    /* Ensure panels are always open on desktop */
+    .accordion-panel { max-height: none !important; opacity: 1 !important; overflow: visible; }
+    .accordion-arrow { transform: rotate(0deg); display: none; }
+    .accordion-title { cursor: default; }
+    /* Tighter visual link between About paragraph and newsletter */
+    #about .accordion-panel { margin-bottom: 0.5rem; }
+    .newsletter-signup { margin-top: 0.25rem; }
+  }
+
+  /* Accordion styles (mobile-first) */
+  .accordion-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .accordion-arrow { transition: transform 0.2s ease; display: inline-block; }
+  .accordion.open .accordion-arrow { transform: rotate(180deg); }
+  .accordion-panel {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+  }
+  .accordion.open .accordion-panel { max-height: 600px; opacity: 1; }
+
+  /* Mobile behavior: stack columns and make accordion collapsed by default */
+  @media (max-width: 600px) {
+    .footer-top {
+      grid-template-columns: 1fr;
+      padding: 0 1rem;
+    }
+    #about, #more, .newsletter-signup { grid-column: auto; }
+    /* Start collapsed on mobile; JS will control open state */
   }
   .footer-social {
     display: flex;
@@ -122,18 +158,4 @@
   #newsletter-form button:hover { background: #f2f2f2; }
   #newsletter-form button:disabled { opacity: 0.6; cursor: default; }
   #newsletter-feedback { margin-top: 0.5rem; font-size: 0.95rem; }
-  @media (max-width: 600px) {
-    .footer-top {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .footer-top > div:first-child {
-      grid-column: span 1;
-      padding-left: 1rem;
-    }
-
-    .footer-top > div:nth-child(2) {
-      grid-column: span 1;
-    }
-  }
 </style>
