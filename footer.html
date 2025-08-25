@@ -60,6 +60,30 @@
   @media (min-width: 900px) {
     .footer-top { padding: 0 2.5rem; }
   }
+
+  /* Mobile responsiveness: stack columns and allow form to wrap */
+  @media (max-width: 600px) {
+    .footer-top {
+      grid-template-columns: 1fr; /* stack About and Links */
+      padding: 0 1rem;            /* comfortable side padding */
+    }
+    .footer-top > div:first-child,
+    .footer-top > div:nth-child(2) {
+      grid-column: auto;          /* reset manual placements */
+    }
+    /* Newsletter form: stack input and button to avoid overflow */
+    #newsletter-form {
+      flex-wrap: wrap;
+    }
+    #newsletter-email {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+    #newsletter-form button {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+  }
   .footer-social {
     display: flex;
     justify-content: center;
