@@ -58,6 +58,11 @@ if (!produitId) {
         image3: data.image3,
         image4: data.image4,
         image5: data.image5,
+        image6: data.image6,
+        image7: data.image7,
+        image8: data.image8,
+        image9: data.image9,
+        image10: data.image10,
         stock: data.stock ?? 0,
         maxpc: typeof data.maxpc === 'number' ? data.maxpc : null,
       };
@@ -155,6 +160,11 @@ if (!produitId) {
       if (produit.image3) images.push(produit.image3);
       if (produit.image4) images.push(produit.image4);
       if (produit.image5) images.push(produit.image5);
+      if (produit.image6) images.push(produit.image6);
+      if (produit.image7) images.push(produit.image7);
+      if (produit.image8) images.push(produit.image8);
+      if (produit.image9) images.push(produit.image9);
+      if (produit.image10) images.push(produit.image10);
 
       window.images = images;
 
