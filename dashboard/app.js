@@ -1,6 +1,6 @@
 // Dashboard App
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 import { firebaseConfig, APP_CHECK_SITE_KEY } from "../firebase-config.js";
 import { getAppCheckToken } from "../appcheck.js";
@@ -58,6 +58,22 @@ if (googleBtn) {
     try {
       await signInWithPopup(auth, provider);
     } catch (e) {
+      // Fallback to redirect for Safari/ITP or popup issues
+      const code = e?.code || "";
+      const popupIssues = [
+        "auth/popup-closed-by-user",
+        "auth/popup-blocked",
+        "auth/cancelled-popup-request",
+      ];
+      if (popupIssues.includes(code)) {
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (e2) {
+          authError.textContent = e2?.message || "Connexion échouée (redirect)";
+          return;
+        }
+      }
       authError.textContent = e?.message || "Connexion échouée";
     }
   });
@@ -65,6 +81,18 @@ if (googleBtn) {
 if (signOutBtn) {
   signOutBtn.addEventListener("click", () => signOut(auth));
 }
+
+// If we came back from a redirect sign-in, process the result
+(async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      // user will also be handled by onAuthStateChanged
+    }
+  } catch (e) {
+    authError.textContent = e?.message || "Erreur lors du retour de connexion";
+  }
+})();
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
