@@ -57,6 +57,10 @@ if (DEV_MODE) {
   (async () => {
     authGate.classList.add("hidden");
     appRoot.classList.remove("hidden");
+    // Hide sign-in controls in dev
+    if (googleBtn) googleBtn.style.display = "none";
+    if (signOutBtn) signOutBtn.style.display = "none";
+    if (userEmailEl) userEmailEl.textContent = "DEV MODE";
     await Promise.all([
       loadOrders(),
       loadStock(),
@@ -91,6 +95,10 @@ if (signOutBtn) {
 }
 
 onAuthStateChanged(auth, async (user) => {
+  if (DEV_MODE) {
+    // In dev, ignore auth changes entirely
+    return;
+  }
   if (!user) {
     userEmailEl.textContent = "";
     appRoot.classList.add("hidden");
