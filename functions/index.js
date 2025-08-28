@@ -28,6 +28,28 @@ const getBrevo = (apiKey) => {
   return new Sib.TransactionalEmailsApi();
 };
 
+// Simple admin allowlist by email (update to your admin email). Consider moving to Secret Manager or Firestore settings.
+const ALLOWED_ADMIN_EMAILS = new Set([
+  'contact@mehomies.com'
+]);
+
+async function requireAdmin(req) {
+  // Only Firebase Auth (not App Check) is accepted for admin endpoints
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ')
+    ? authHeader.substring('Bearer '.length)
+    : null;
+  if (!idToken) return null;
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const email = decoded.email || null;
+    if (!email || !ALLOWED_ADMIN_EMAILS.has(email)) return null;
+    return { uid: decoded.uid, email };
+  } catch (_) {
+    return null;
+  }
+}
+
 const ALLOWED_ORIGINS = [
   'https://www.mehomies.com',
   'https://mehomies.com',
@@ -834,6 +856,82 @@ exports.subscribeNewsletter = onRequest({ region: 'europe-west1', secrets: [brev
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('subscribeNewsletter error:', err.message);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Admin-only: list orders with optional filters. Requires Firebase Auth of an allowed admin email.
+exports.adminListOrders = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  const origin = req.headers.origin;
+  setCors(res, origin);
+  if (req.method === 'OPTIONS') return res.status(204).send('');
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+  // Only allow GET
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  try {
+    const adminCtx = await requireAdmin(req);
+    if (!adminCtx) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { status, productId, startDate, endDate, limit } = req.query;
+    let q = db.collection('orders');
+
+    // status filter
+    if (typeof status === 'string' && status) {
+      q = q.where('status', '==', status);
+    }
+
+    // date range on createdAt
+    if (typeof startDate === 'string' && startDate) {
+      const ts = admin.firestore.Timestamp.fromDate(new Date(startDate));
+      q = q.where('createdAt', '>=', ts);
+    }
+    if (typeof endDate === 'string' && endDate) {
+      const ts = admin.firestore.Timestamp.fromDate(new Date(endDate));
+      q = q.where('createdAt', '<=', ts);
+    }
+
+    // order by createdAt desc
+    q = q.orderBy('createdAt', 'desc');
+
+    const max = Math.max(1, Math.min(500, Number(limit) || 200));
+    const snap = await q.limit(max).get();
+
+    let orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (typeof productId === 'string' && productId) {
+      orders = orders.filter(o => Array.isArray(o.items) && o.items.some(it => it && it.id === productId));
+    }
+
+    // shape response: compute totalPaidEuros and flatten some fields
+    const result = orders.map(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const itemsTotal = items.reduce((sum, it) => sum + (Number(it.prix) * Number(it.quantite || 0)), 0);
+      const shippingCents = Number.isFinite(o.shippingFeeCents) ? o.shippingFeeCents : 0;
+      const totalCents = Number.isFinite(o.totalCents) ? o.totalCents : Math.round(itemsTotal * 100) + shippingCents;
+      return {
+        id: o.id,
+        status: o.status || null,
+        orderNumber: o.orderNumber || null,
+        totalCents,
+        totalEuros: (totalCents / 100),
+        shippingFeeCents: shippingCents,
+        customerEmail: o.customerEmail || o.email || null,
+        customerName: o.customerName || o.name || null,
+        isPickup: !!o.isPickup,
+        reservedAt: o.reservedAt || null,
+        createdAt: o.createdAt || null,
+        paymentConfirmedAt: o.paymentConfirmedAt || null,
+        items: items.map(i => ({ id: i.id, nom: i.nom, quantite: i.quantite, prix: i.prix, taille: i.taille }))
+      };
+    });
+
+    return res.status(200).json({ orders: result });
+  } catch (err) {
+    console.error('adminListOrders error:', err.message);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard • Mehomies</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="authGate" class="auth-gate hidden">
+    <div class="auth-card">
+      <h1>Accès restreint</h1>
+      <p>Connecte-toi avec le compte admin pour accéder au dashboard.</p>
+      <button id="googleSignInBtn">Se connecter avec Google</button>
+      <p id="authError" class="error"></p>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">Mehomies • Dashboard</div>
+      <nav>
+        <button data-section="orders" class="active">Commandes</button>
+        <button data-section="stock">Stock</button>
+        <button data-section="traffic">Trafic</button>
+        <button data-section="marketing">Marketing</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="userEmail"></div>
+        <button id="signOutBtn" class="secondary">Se déconnecter</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section id="section-orders" class="section visible">
+        <h2>Commandes</h2>
+        <form id="ordersFilters" class="filters">
+          <label>
+            Statut
+            <select name="status">
+              <option value="">Tous</option>
+              <option value="paid">Paid</option>
+              <option value="reserved">Reserved</option>
+              <option value="canceled">Canceled</option>
+              <option value="pending">Pending</option>
+            </select>
+          </label>
+          <label>
+            Produit ID
+            <input type="text" name="productId" placeholder="ex: cap_black" />
+          </label>
+          <label>
+            Début
+            <input type="date" name="startDate" />
+          </label>
+          <label>
+            Fin
+            <input type="date" name="endDate" />
+          </label>
+          <button type="submit">Filtrer</button>
+        </form>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">Chiffre d'affaires (filtre)</div>
+            <div class="card-value"><span id="ordersRevenue">0</span> €</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Nb commandes</div>
+            <div class="card-value" id="ordersCount">0</div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>#</th>
+                <th>Status</th>
+                <th>Total (€)</th>
+                <th>Email</th>
+                <th>Produits</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="section-stock" class="section">
+        <h2>Stock</h2>
+        <div class="table-wrapper">
+          <table id="stockTable">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Stock</th>
+                <th>Alerte</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="section-traffic" class="section">
+        <h2>Trafic</h2>
+        <p class="muted">Widget minimal pour commencer. Intégration GA à venir via Cloud Function (GA4 Data API).</p>
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">Sessions (7 jours)</div>
+            <div class="card-value" id="sessions7d">—</div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="trafficChart" height="120"></canvas>
+        </div>
+      </section>
+
+      <section id="section-marketing" class="section">
+        <h2>Marketing</h2>
+        <p class="muted">Connexion Brevo à venir. Pour l'instant, ce bloc est un placeholder.</p>
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">Contacts newsletter</div>
+            <div class="card-value" id="brevoContacts">—</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Taux d'ouverture (dernière campagne)</div>
+            <div class="card-value" id="brevoOpenRate">—</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
