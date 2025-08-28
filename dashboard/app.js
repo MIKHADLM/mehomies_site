@@ -7,7 +7,7 @@ import { getAppCheckToken } from "../appcheck.js";
 
 // Constants
 const FUNCTIONS_BASE = "https://europe-west1-mehomiesstore.cloudfunctions.net";
-const ADMIN_EMAIL = "contact@mehomies.com"; // Keep in sync with server allowlist
+const ADMIN_EMAIL = "mehomies.contact@gmail.com"; // Keep in sync with server allowlist
 
 // DOM helpers
 const $ = (sel) => document.querySelector(sel);

@@ -30,7 +30,7 @@ const getBrevo = (apiKey) => {
 
 // Simple admin allowlist by email (update to your admin email). Consider moving to Secret Manager or Firestore settings.
 const ALLOWED_ADMIN_EMAILS = new Set([
-  'contact@mehomies.com'
+  'mehomies.contact@gmail.com'
 ]);
 
 async function requireAdmin(req) {
@@ -54,7 +54,9 @@ const ALLOWED_ORIGINS = [
   'https://www.mehomies.com',
   'https://mehomies.com',
   'https://mehomies.vercel.app',
-  'https://mehomies-site-lx2nroux4-mikhadlms-projects.vercel.app'
+  'https://mehomies-site-lx2nroux4-mikhadlms-projects.vercel.app',
+  'https://dashboard.mehomies.com',
+  'http://localhost:3000'
 ];
 
 function setCors(res, origin) {
