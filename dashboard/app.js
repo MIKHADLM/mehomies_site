@@ -87,7 +87,7 @@ onAuthStateChanged(auth, async (user) => {
   // Optional client-side guard
   if (user.email !== ADMIN_EMAIL) {
     await signOut(auth);
-    authError.textContent = "Ce compte n'est pas autorisé.";
+    authError.textContent = `Ce compte n'est pas autorisé: ${user.email || ""}.`;
     authGate.classList.remove("hidden");
     appRoot.classList.add("hidden");
     return;
