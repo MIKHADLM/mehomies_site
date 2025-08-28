@@ -14,6 +14,10 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
 
+// TEMP: Development mode to bypass auth checks for dashboard during active development.
+// WARNING: DO NOT enable in production. Remember to set back to false before deploying.
+const DEV_MODE = true;
+
 // Initialize Stripe lazily inside handlers using injected secret
 const getStripe = () => {
   const Stripe = require('stripe');
@@ -69,6 +73,10 @@ function setCors(res, origin) {
 }
 
 async function verifyAuthOrAppCheck(req) {
+  if (DEV_MODE) {
+    // Bypass for development only
+    return { uid: 'dev-user', method: 'dev' };
+  }
   // Try Firebase Auth
   const authHeader = req.headers.authorization || '';
   const idToken = authHeader.startsWith('Bearer ')
@@ -876,7 +884,7 @@ exports.adminListOrders = onRequest({ region: 'europe-west1' }, async (req, res)
   }
 
   try {
-    const adminCtx = await requireAdmin(req);
+    const adminCtx = DEV_MODE ? { uid: 'dev-user', email: 'dev@local' } : await requireAdmin(req);
     if (!adminCtx) return res.status(401).json({ error: 'Unauthorized' });
 
     const { status, productId, startDate, endDate, limit } = req.query;

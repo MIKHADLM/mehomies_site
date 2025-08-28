@@ -8,6 +8,7 @@ import { getAppCheckToken } from "../appcheck.js";
 // Constants
 const FUNCTIONS_BASE = "https://europe-west1-mehomiesstore.cloudfunctions.net";
 const ADMIN_EMAIL = "mehomies.contact@gmail.com"; // Keep in sync with server allowlist
+const DEV_MODE = true; // TEMP: bypass auth during development
 
 // DOM helpers
 const $ = (sel) => document.querySelector(sel);
@@ -50,6 +51,20 @@ $$("aside nav button").forEach((btn) => {
     });
   });
 });
+
+// DEV: show app immediately without auth and load data
+if (DEV_MODE) {
+  (async () => {
+    authGate.classList.add("hidden");
+    appRoot.classList.remove("hidden");
+    await Promise.all([
+      loadOrders(),
+      loadStock(),
+      renderTrafficPlaceholder(),
+      renderMarketingPlaceholder(),
+    ]);
+  })();
+}
 
 // Sign-in / Sign-out
 if (googleBtn) {
@@ -142,7 +157,7 @@ async function loadOrders() {
   if (endDate) params.set("endDate", endDate);
 
   const url = `${FUNCTIONS_BASE}/adminListOrders?${params.toString()}`;
-  const res = await fetch(url, { headers: await getHeaders(true) });
+  const res = await fetch(url, { headers: await getHeaders(!DEV_MODE) });
   if (!res.ok) {
     console.error("adminListOrders failed", await res.text());
     ordersTableBody.innerHTML = `<tr><td colspan="6">Erreur chargement</td></tr>`;
@@ -177,7 +192,7 @@ const stockTableBody = $("#stockTable tbody");
 
 async function loadStock() {
   const url = `${FUNCTIONS_BASE}/listProducts`;
-  const headers = await getHeaders(true);
+  const headers = await getHeaders(!DEV_MODE);
   const res = await fetch(url, { headers });
   if (!res.ok) {
     console.error("listProducts failed", await res.text());
