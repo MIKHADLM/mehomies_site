@@ -24,6 +24,80 @@ const getStripe = () => {
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 };
 
+// Fonction pour libérer le stock d'une commande
+async function releaseStockForOrder(orderRef, orderData) {
+  const batch = db.batch();
+  
+  // Pour chaque article de la commande, remettre le stock à jour
+  for (const item of orderData.items) {
+    const productRef = db.collection('produits').doc(item.id);
+    
+    // Vérifier si le stock est géré par taille ou non
+    if (item.taille) {
+      // Mise à jour du stock par taille
+      const productDoc = await productRef.get();
+      if (productDoc.exists) {
+        const productData = productDoc.data();
+        if (productData.stock && typeof productData.stock === 'object') {
+          const updatedStock = { ...productData.stock };
+          if (updatedStock[item.taille] !== undefined) {
+            updatedStock[item.taille] = (updatedStock[item.taille] || 0) + item.quantite;
+            batch.update(productRef, { stock: updatedStock });
+          }
+        }
+      }
+    } else {
+      // Mise à jour du stock simple
+      batch.update(productRef, {
+        stock: admin.firestore.FieldValue.increment(item.quantite)
+      });
+    }
+  }
+  
+  // Marquer la commande comme expirée
+  batch.update(orderRef, {
+    status: 'expired',
+    expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+    stockReserved: false
+  });
+  
+  return batch.commit();
+}
+
+// Fonction pour nettoyer les commandes expirées non traitées
+exports.cleanupExpiredOrders = onSchedule({
+  schedule: 'every 1 hours',
+  region: 'europe-west1'
+}, async (event) => {
+  console.log('Début du nettoyage des commandes expirées...');
+  
+  try {
+    const now = admin.firestore.Timestamp.now();
+    // Chercher les commandes réservées dont la date d'expiration est dépassée
+    const expiredOrders = await db.collection('orders')
+      .where('status', '==', 'reserved')
+      .where('expiresAt', '<=', now)
+      .get();
+    
+    console.log(`Nombre de commandes expirées à traiter: ${expiredOrders.size}`);
+    
+    // Traiter chaque commande expirée
+    for (const doc of expiredOrders.docs) {
+      try {
+        console.log(`Traitement de la commande expirée: ${doc.id}`);
+        await releaseStockForOrder(doc.ref, doc.data());
+        console.log(`Commande marquée comme expirée: ${doc.id}`);
+      } catch (error) {
+        console.error(`Erreur lors du traitement de la commande ${doc.id}:`, error);
+      }
+    }
+    
+    console.log('Nettoyage des commandes expirées terminé');
+  } catch (error) {
+    console.error('Erreur lors du nettoyage des commandes expirées:', error);
+  }
+});
+
 // Lazy Brevo (Sendinblue) client factory using Secret Manager
 const getBrevo = (apiKey) => {
   const Sib = require('sib-api-v3-sdk');
@@ -451,6 +525,7 @@ exports.stripeWebhook = onRequest(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+
     // Handle successful payment
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
@@ -527,26 +602,14 @@ exports.stripeWebhook = onRequest(
       // Mise à jour du statut de la commande en "paid"
       if (metadata.orderId) {
         const orderRef = db.collection("orders").doc(metadata.orderId);
-
-        // Récupération des informations client
-        const customerDetails = session.customer_details || {};
-
-        const amountTotalCents = typeof session.amount_total === 'number' ? session.amount_total : null;
-        const amountShippingCents = (session.total_details && typeof session.total_details.amount_shipping === 'number')
-          ? session.total_details.amount_shipping
-          : null;
-
         const updateData = {
-          status: "paid",
-          paymentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+          status: 'paid',
+          paidAt: admin.firestore.FieldValue.serverTimestamp(),
           stripeSessionId: session.id,
-          customerEmail: customerDetails.email || null,
-          phoneNumber: customerDetails.phone || null,
-          customerName: customerDetails.name || null,
-          ...(amountTotalCents !== null && { totalCents: amountTotalCents }),
-          ...(amountShippingCents !== null && { shippingFeeCents: amountShippingCents })
+          paymentIntentId: session.payment_intent,
+          customerEmail: session.customer_details?.email || null
         };
-
+        
         if (shippingAddress) {
           updateData.shippingAddress = shippingAddress;
           console.log('Adresse de livraison ajoutée:', shippingAddress);
@@ -562,6 +625,7 @@ exports.stripeWebhook = onRequest(
         }
 
         await orderRef.set(updateData, { merge: true });
+        console.log("Commande marquée comme payée :", metadata.orderId);
         console.log("Commande mise à jour à paid :", metadata.orderId);
 
         // Gestion du numéro de commande automatique (version corrigée)
@@ -596,47 +660,42 @@ exports.stripeWebhook = onRequest(
       }
     }
 
-    // Release reservation for expired sessions
+    // Handle expired checkout session
     if (event.type === 'checkout.session.expired') {
       const session = event.data.object;
+      console.log('Stripe checkout.session.expired received:', session.id);
+
       const metadata = session.metadata || {};
       const orderId = metadata.orderId;
-      if (orderId) {
-        const orderRef = db.collection('orders').doc(orderId);
-        const snap = await orderRef.get();
-        if (snap.exists) {
-          const data = snap.data();
-          if (data.status === 'reserved' && data.stockReserved) {
-            const items = Array.isArray(data.items) ? data.items : [];
-            await db.runTransaction(async (tx) => {
-              // restore stock
-              for (const item of items) {
-                const produitRef = db.collection('produits').doc(item.id);
-                const psnap = await tx.get(produitRef);
-                if (!psnap.exists) continue;
-                const produit = psnap.data();
-                if (typeof produit.stock === 'number') {
-                  const actuel = produit.stock || 0;
-                  tx.update(produitRef, { stock: actuel + (item.quantite || 0) });
-                } else if (typeof produit.stock === 'object' && item.taille) {
-                  const stockParTaille = { ...(produit.stock || {}) };
-                  const actuel = stockParTaille[item.taille] || 0;
-                  stockParTaille[item.taille] = actuel + (item.quantite || 0);
-                  tx.update(produitRef, { stock: stockParTaille });
-                }
-              }
-              tx.update(orderRef, { status: 'canceled', stockReserved: false, canceledAt: admin.firestore.FieldValue.serverTimestamp() });
-            });
-            console.log('Reservation released for expired session, order:', orderId);
-          }
-        }
+      
+      if (!orderId) {
+        console.log('No orderId in metadata, skipping');
+        return res.status(200).send('OK');
+      }
+
+      const orderRef = db.collection('orders').doc(orderId);
+      const orderDoc = await orderRef.get();
+      
+      // Vérifier si la commande existe et est toujours en statut 'reserved'
+      if (!orderDoc.exists || orderDoc.data().status !== 'reserved') {
+        console.log(`Order ${orderId} not found or not in reserved state, skipping`);
+        return res.status(200).send('OK');
+      }
+
+      const orderData = orderDoc.data();
+      // Utiliser la fonction releaseStockForOrder pour libérer le stock
+      try {
+        await releaseStockForOrder(orderRef, orderData);
+        console.log(`Stock libéré pour la commande expirée: ${orderId}`);
+      } catch (error) {
+        console.error('Erreur lors de la libération du stock:', error);
       }
     }
 
     res.status(200).send("OK");
   });
 
-
+// Fonction pour récupérer les détails d'une commande
 exports.getOrderDetails = onRequest({ region: 'europe-west1' }, async (req, res) => {
   const origin = req.headers.origin;
   setCors(res, origin);
