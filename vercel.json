@@ -15,5 +15,10 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/coming-soon.html" },
+    { "source": "/index", "destination": "/coming-soon.html" },
+    { "source": "/index.html", "destination": "/coming-soon.html" }
   ]
 }
