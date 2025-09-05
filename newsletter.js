@@ -11,7 +11,7 @@ function setFeedback(msg, ok = false) {
   box.style.color = ok ? '#8bf18b' : '#ffb3b3';
 }
 
-async function subscribe(email) {
+export async function subscribe(email) {
   // Prefer the regional endpoint used elsewhere in the app
   const url = 'https://europe-west1-mehomiesstore.cloudfunctions.net/subscribeNewsletter';
   let token = null;
