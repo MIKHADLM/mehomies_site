@@ -44,7 +44,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(0, 0, 0, 0.7);
       z-index: 0;
     }
     
@@ -63,20 +63,21 @@
       max-width: 500px;
       width: 100%;
       padding: 2.5rem;
-      background-color: var(--secondary-color);
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      background-color: transparent;
       position: relative;
       z-index: 1;
       margin: 2rem;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
       text-align: center;
     }
     
-    .logo {
-      max-width: 200px;
+    .logo-container {
+      text-align: center;
       margin-bottom: 2rem;
+    }
+    
+    .logo {
+      max-height: 100px;
+      width: auto;
     }
     
     h1 {
@@ -113,11 +114,11 @@
     input[type="password"] {
       width: 100%;
       padding: 0.8rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.5);
       border-radius: 4px;
       font-size: 1rem;
       margin-bottom: 1rem;
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(0, 0, 0, 0.3);
       color: white;
       transition: all 0.3s ease;
     }
@@ -146,6 +147,7 @@
       font-weight: 600;
       transition: all 0.3s ease;
       margin-bottom: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     button:hover {
@@ -162,34 +164,32 @@
       background-color: #333;
     }
     
-    .divider {
-      margin: 2rem 0;
+    .password-prompt {
+      margin-top: 1rem;
       text-align: center;
-      position: relative;
     }
     
-    .divider::before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background-color: #ddd;
-      z-index: 1;
+    #show-password-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0.5rem;
+      display: inline-block;
+      transition: color 0.3s ease;
     }
     
-    .divider span {
-      background-color: var(--secondary-color);
-      position: relative;
-      z-index: 2;
-      padding: 0 1rem;
-      color: #777;
+    #show-password-btn:hover {
+      color: white;
     }
     
     .password-section {
       display: none;
-      margin-top: 2rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .message {
@@ -257,20 +257,21 @@
   
   <div class="page-wrapper">
     <div class="container">
-    <img src="Assets/logo.png" alt="MEHOMIES" class="logo">
-    <h1>Bienvenue chez MEHOMIES</h1>
-    <p class="coming-soon">Notre site sera bientôt en ligne !</p>
-    <p>Inscrivez-vous à notre newsletter pour être informé(e) de notre lancement et bénéficier d'offres exclusives.</p>
-    
-    <div id="newsletter-form">
-      <div class="form-group">
-        <label for="email">Votre adresse email</label>
-        <input type="email" id="email" placeholder="votre@email.com" required>
+      <div class="logo-container">
+        <img src="Assets/logo_mehomies3.png" alt="MEHOMIES" class="logo">
       </div>
-      <button id="subscribe-btn">S'inscrire à la newsletter</button>
-      <div class="divider"><span>OU</span></div>
-      <button id="show-password-btn">J'ai un code d'accès</button>
-    </div>
+    <p class="coming-soon">Donnes nous ton mail pour faire partir de l'aventure Mehomies !</p>
+    
+    <form id="newsletter-form" novalidate>
+      <div class="form-group">
+        <input type="email" id="email" name="email" placeholder="ton@email.com" required>
+      </div>
+      <button type="submit">S'inscrire à la newsletter</button>
+      <div id="newsletter-feedback" role="status" aria-live="polite"></div>
+      <div class="password-prompt">
+        <span id="show-password-btn">Entrez le mot de passe</span>
+      </div>
+    </form>
     
     <div id="password-form" class="password-section">
       <div class="form-group">

@@ -1,4 +1,22 @@
 {
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/",
+        "destination": "/coming-soon.html"
+      },
+      {
+        "source": "/index.html",
+        "destination": "/coming-soon.html"
+      }
+    ]
+  },
   "functions": [
     {
       "source": "functions",

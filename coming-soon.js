@@ -1,80 +1,62 @@
-// Configuration Firebase - À remplacer par votre configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyB4D3VvzD3YwL3YwL3YwL3YwL3YwL3YwL3Y",
-  authDomain: "votre-projet.firebaseapp.com",
-  projectId: "votre-projet",
-  storageBucket: "votre-projet.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456"
-};
-
-// Initialisation de Firebase
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Importer la fonction d'inscription à la newsletter
+import { subscribe } from './newsletter.js';
 
 // Éléments du DOM
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
-const subscribeBtn = document.getElementById('subscribe-btn');
 const showPasswordBtn = document.getElementById('show-password-btn');
 const accessBtn = document.getElementById('access-btn');
 const backBtn = document.getElementById('back-btn');
 const newsletterForm = document.getElementById('newsletter-form');
 const passwordForm = document.getElementById('password-form');
-const messageDiv = document.getElementById('message');
+const feedbackDiv = document.getElementById('newsletter-feedback');
 
 // Mot de passe d'accès (à remplacer par un mot de passe sécurisé en production)
 const ACCESS_PASSWORD = "mehomies2024";
 
 // Afficher le formulaire de mot de passe
 showPasswordBtn.addEventListener('click', () => {
-  newsletterForm.style.display = 'none';
-  passwordForm.style.display = 'block';
+  if (passwordForm.style.display === 'none' || !passwordForm.style.display) {
+    passwordForm.style.display = 'block';
+    showPasswordBtn.textContent = 'Masquer le formulaire';
+  } else {
+    passwordForm.style.display = 'none';
+    showPasswordBtn.textContent = 'Déjà un compte ? Se connecter';
+  }
+  clearFeedback();
 });
 
 // Revenir au formulaire de newsletter
-backBtn.addEventListener('click', () => {
+backBtn.addEventListener('click', (e) => {
+  e.preventDefault();
   passwordForm.style.display = 'none';
-  newsletterForm.style.display = 'block';
-  clearMessage();
+  showPasswordBtn.textContent = 'Déjà un compte ? Se connecter';
+  clearFeedback();
 });
 
 // Gérer l'inscription à la newsletter
-subscribeBtn.addEventListener('click', async (e) => {
+newsletterForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const email = emailInput.value.trim();
   
   if (!isValidEmail(email)) {
-    showMessage("Veuillez entrer une adresse email valide.", 'error');
+    setFeedback("Merci d'entrer un email valide.");
     return;
   }
   
+  const submitBtn = newsletterForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  
   try {
-    // Vérifier si l'email existe déjà
-    const q = query(collection(db, 'newsletter'), where('email', '==', email));
-    const querySnapshot = await getDocs(q);
-    
-    if (!querySnapshot.empty) {
-      showMessage("Vous êtes déjà inscrit(e) à notre newsletter !", 'success');
-      return;
-    }
-    
-    // Ajouter l'email à la collection newsletter
-    await addDoc(collection(db, 'newsletter'), {
-      email: email,
-      createdAt: serverTimestamp(),
-      source: 'coming-soon-page'
-    });
-    
-    showMessage("Merci pour votre inscription ! Vous serez informé(e) de notre lancement.", 'success');
-    emailInput.value = ''; // Vider le champ après l'inscription
+    await subscribe(email);
+    setFeedback('Merci ! Inscription confirmée. 👌', true);
+    emailInput.value = '';
   } catch (error) {
     console.error("Erreur lors de l'inscription : ", error);
-    showMessage("Une erreur est survenue. Veuillez réessayer plus tard.", 'error');
+    setFeedback(error.message || "Une erreur est survenue. Veuillez réessayer plus tard.");
+  } finally {
+    submitBtn.disabled = false;
   }
 });
 
@@ -106,21 +88,23 @@ function isValidEmail(email) {
   return re.test(email);
 }
 
-// Fonction pour afficher les messages
-function showMessage(message, type) {
-  messageDiv.textContent = message;
-  messageDiv.className = `message ${type}`;
-  messageDiv.style.display = 'block';
+// Fonction pour afficher les messages de feedback
+function setFeedback(message, isSuccess = false) {
+  if (!feedbackDiv) return;
+  feedbackDiv.textContent = message || '';
+  feedbackDiv.style.color = isSuccess ? '#8bf18b' : '#ffb3b3';
   
   // Masquer le message après 5 secondes
-  setTimeout(clearMessage, 5000);
+  if (message) {
+    setTimeout(clearFeedback, 5000);
+  }
 }
 
-// Fonction pour effacer les messages
-function clearMessage() {
-  messageDiv.textContent = '';
-  messageDiv.className = 'message';
-  messageDiv.style.display = 'none';
+// Fonction pour effacer les messages de feedback
+function clearFeedback() {
+  if (feedbackDiv) {
+    feedbackDiv.textContent = '';
+  }
 }
 
 // Vérifier si l'utilisateur a déjà accès
