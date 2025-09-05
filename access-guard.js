@@ -8,12 +8,12 @@
     // Only gate top-level pages of the site (html or root)
     var isHtmlPage = /\.html$/.test(path) || path === '/' || path === '';
     if (!isHtmlPage) return;
-    // If not granted access via session, redirect to coming soon
-    var hasAccess = null;
-    try { hasAccess = window.sessionStorage.getItem('hasAccess'); } catch (_) { hasAccess = null; }
-    if (hasAccess !== 'true') {
-      window.location.replace('/coming-soon.html');
-    }
+    // Ask server if access cookie is valid
+    fetch('/api/check-access', { method: 'GET', credentials: 'include' })
+      .then(function (r) { if (r.ok) return; throw new Error('no access'); })
+      .catch(function () {
+        window.location.replace('/coming-soon.html');
+      });
   } catch (_) {
     // no-op: fail closed on errors is fine
   }

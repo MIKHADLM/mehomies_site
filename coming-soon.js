@@ -12,8 +12,7 @@ const passwordForm = document.getElementById('password-form');
 const feedbackDiv = document.getElementById('newsletter-feedback');
 const messageBox = document.getElementById('message');
 
-// Mot de passe d'accès (à remplacer par un mot de passe sécurisé en production)
-const ACCESS_PASSWORD = "mehomies2024";
+// Accès sécurisé: la vérification se fait côté serveur via /api/verify-access
 
 // Afficher le formulaire de mot de passe
 showPasswordBtn.addEventListener('click', () => {
@@ -69,8 +68,8 @@ passwordInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Gérer l'accès avec mot de passe
-accessBtn.addEventListener('click', (e) => {
+// Gérer l'accès avec mot de passe (appel serveur)
+accessBtn.addEventListener('click', async (e) => {
   e.preventDefault();
   
   const password = passwordInput.value.trim();
@@ -79,15 +78,24 @@ accessBtn.addEventListener('click', (e) => {
     showMessage("Veuillez entrer le mot de passe.", 'error');
     return;
   }
-  
-  if (password === ACCESS_PASSWORD) {
-    // Stocker en session que l'utilisateur a accès
-    sessionStorage.setItem('hasAccess', 'true');
+  // Appel à la Cloud Function via Hosting rewrite (même domaine)
+  try {
+    const res = await fetch('/api/verify-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ password })
+    });
+    if (!res.ok) {
+      showMessage("Mot de passe incorrect. Veuillez réessayer.", 'error');
+      passwordInput.value = '';
+      return;
+    }
     // Rediriger vers la page d'accueil
     window.location.href = 'index.html';
-  } else {
-    showMessage("Mot de passe incorrect. Veuillez réessayer.", 'error');
-    passwordInput.value = ''; // Vider le champ en cas d'erreur
+  } catch (err) {
+    console.error('verify-access error', err);
+    showMessage("Erreur réseau. Réessayez dans un instant.", 'error');
   }
 });
 
@@ -130,11 +138,15 @@ function showMessage(msg, type = 'error') {
 }
 
 // Vérifier si l'utilisateur a déjà accès
-function checkAccess() {
-  // Si l'utilisateur a déjà accès et est sur la page coming-soon, le rediriger vers index.html
-  if (sessionStorage.getItem('hasAccess') === 'true' && 
-      window.location.pathname.endsWith('coming-soon.html')) {
-    window.location.href = 'index.html';
+async function checkAccess() {
+  // Si l'utilisateur dispose déjà d'un cookie d'accès valide, rediriger depuis la page coming-soon
+  try {
+    const res = await fetch('/api/check-access', { method: 'GET', credentials: 'include' });
+    if (res.ok && window.location.pathname.endsWith('coming-soon.html')) {
+      window.location.href = 'index.html';
+    }
+  } catch (_) {
+    // ignorer
   }
 }
 

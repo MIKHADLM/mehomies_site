@@ -10,6 +10,7 @@ const brevoApiKey = defineSecret('BREVO_API_KEY');
 // Do not load dotenv in production functions; use Secret Manager instead
 // require('dotenv').config();
 const admin = require("firebase-admin");
+const crypto = require('crypto');
 
 admin.initializeApp();
 const db = admin.firestore();

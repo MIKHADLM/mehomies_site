@@ -14,6 +14,14 @@
       {
         "source": "/index.html",
         "destination": "/coming-soon.html"
+      },
+      {
+        "source": "/api/verify-access",
+        "function": "verifyAccess"
+      },
+      {
+        "source": "/api/check-access",
+        "function": "checkAccess"
       }
     ]
   },
