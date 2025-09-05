@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEHOMIES - Bientôt disponible</title>
+  <style>
+    :root {
+      --primary-color: #ffffff;
+      --secondary-color: rgba(0, 0, 0, 0.7);
+      --accent-color: #f0f0f0;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--primary-color);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      object-fit: cover;
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 0;
+    }
+    
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .container {
+      max-width: 500px;
+      width: 100%;
+      padding: 2.5rem;
+      background-color: var(--secondary-color);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+      margin: 2rem;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+    
+    .logo {
+      max-width: 200px;
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      color: #666;
+    }
+    
+    .coming-soon {
+      font-size: 1.3rem;
+      color: var(--primary-color);
+      margin-bottom: 2rem;
+      font-weight: 500;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: white;
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    button {
+      background-color: white;
+      color: #000;
+      border: none;
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-bottom: 0.5rem;
+    }
+    
+    button:hover {
+      background-color: #f0f0f0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:hover {
+      background-color: #333;
+    }
+    
+    .divider {
+      margin: 2rem 0;
+      text-align: center;
+      position: relative;
+    }
+    
+    .divider::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #ddd;
+      z-index: 1;
+    }
+    
+    .divider span {
+      background-color: var(--secondary-color);
+      position: relative;
+      z-index: 2;
+      padding: 0 1rem;
+      color: #777;
+    }
+    
+    .password-section {
+      display: none;
+      margin-top: 2rem;
+    }
+    
+    .message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .show-password {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: inline-block;
+      transition: color 0.3s ease;
+    }
+    
+    .show-password:hover {
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+        max-width: 90%;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      p {
+        font-size: 1rem;
+      }
+      
+      .logo {
+        max-width: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <video class="video-background" autoplay muted loop playsinline>
+    <source src="Assets/vid1_2.mp4" type="video/mp4">
+    Votre navigateur ne supporte pas la lecture de vidéos.
+  </video>
+  <div class="overlay"></div>
+  
+  <div class="page-wrapper">
+    <div class="container">
+    <img src="Assets/logo.png" alt="MEHOMIES" class="logo">
+    <h1>Bienvenue chez MEHOMIES</h1>
+    <p class="coming-soon">Notre site sera bientôt en ligne !</p>
+    <p>Inscrivez-vous à notre newsletter pour être informé(e) de notre lancement et bénéficier d'offres exclusives.</p>
+    
+    <div id="newsletter-form">
+      <div class="form-group">
+        <label for="email">Votre adresse email</label>
+        <input type="email" id="email" placeholder="votre@email.com" required>
+      </div>
+      <button id="subscribe-btn">S'inscrire à la newsletter</button>
+      <div class="divider"><span>OU</span></div>
+      <button id="show-password-btn">J'ai un code d'accès</button>
+    </div>
+    
+    <div id="password-form" class="password-section">
+      <div class="form-group">
+        <label for="password">Mot de passe d'accès</label>
+        <input type="password" id="password" placeholder="Entrez le mot de passe" required>
+        <button id="access-btn">Accéder au site</button>
+        <button id="back-btn" class="show-password">Retour</button>
+      </div>
+    </div>
+    
+    <div id="message" class="message"></div>
+  </div>
+  </div>
+
+  <script type="module" src="coming-soon.js"></script>
+</body>
+</html>
