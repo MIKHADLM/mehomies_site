@@ -1,16 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <script>
-    // Vérifier l'accès au chargement de la page
-    document.addEventListener('DOMContentLoaded', function() {
-      // Si l'utilisateur n'a pas accès et n'est pas déjà sur la page coming-soon
-      if (sessionStorage.getItem('hasAccess') !== 'true' && 
-          !window.location.pathname.endsWith('coming-soon.html')) {
-        window.location.href = 'coming-soon.html';
-      }
-    });
-  </script>
+  <script src="/access-guard.js" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MEHOMIES</title>

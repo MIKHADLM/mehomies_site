@@ -10,6 +10,7 @@ const backBtn = document.getElementById('back-btn');
 const newsletterForm = document.getElementById('newsletter-form');
 const passwordForm = document.getElementById('password-form');
 const feedbackDiv = document.getElementById('newsletter-feedback');
+const messageBox = document.getElementById('message');
 
 // Mot de passe d'accès (à remplacer par un mot de passe sécurisé en production)
 const ACCESS_PASSWORD = "mehomies2024";
@@ -21,7 +22,7 @@ showPasswordBtn.addEventListener('click', () => {
     showPasswordBtn.textContent = 'Masquer le formulaire';
   } else {
     passwordForm.style.display = 'none';
-    showPasswordBtn.textContent = 'Déjà un compte ? Se connecter';
+    showPasswordBtn.textContent = 'Entrez le mot de passe';
   }
   clearFeedback();
 });
@@ -30,7 +31,7 @@ showPasswordBtn.addEventListener('click', () => {
 backBtn.addEventListener('click', (e) => {
   e.preventDefault();
   passwordForm.style.display = 'none';
-  showPasswordBtn.textContent = 'Déjà un compte ? Se connecter';
+  showPasswordBtn.textContent = 'Entrez le mot de passe';
   clearFeedback();
 });
 
@@ -57,6 +58,14 @@ newsletterForm.addEventListener('submit', async (e) => {
     setFeedback(error.message || "Une erreur est survenue. Veuillez réessayer plus tard.");
   } finally {
     submitBtn.disabled = false;
+  }
+});
+
+// Permettre la touche Entrée dans le champ mot de passe
+passwordInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    accessBtn.click();
   }
 });
 
@@ -104,6 +113,19 @@ function setFeedback(message, isSuccess = false) {
 function clearFeedback() {
   if (feedbackDiv) {
     feedbackDiv.textContent = '';
+  }
+}
+
+// Afficher un message global (succès/erreur) pour la section mot de passe
+function showMessage(msg, type = 'error') {
+  if (!messageBox) return;
+  messageBox.textContent = msg || '';
+  messageBox.classList.remove('success', 'error');
+  if (type === 'success') messageBox.classList.add('success');
+  else messageBox.classList.add('error');
+  messageBox.style.display = msg ? 'block' : 'none';
+  if (msg) {
+    setTimeout(() => { if (messageBox) messageBox.style.display = 'none'; }, 5000);
   }
 }
 
