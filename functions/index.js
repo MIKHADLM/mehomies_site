@@ -830,6 +830,94 @@ exports.getProduct = onRequest({ region: 'europe-west1' }, async (req, res) => {
   }
 });
 
+// =============================
+// Secure Preview Access Endpoints
+// =============================
+function b64urlEncode(str) {
+  return Buffer.from(str).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function b64urlDecode(b64url) {
+  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+  return Buffer.from(b64, 'base64').toString('utf8');
+}
+
+function hmacSign(input, secret) {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(input)
+    .digest('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+function makeAccessCookie(value, maxAgeSeconds) {
+  const parts = [
+    `mh_access=${value}`,
+    'Path=/',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+    `Max-Age=${maxAgeSeconds}`,
+  ];
+  return parts.join('; ');
+}
+
+// POST /api/verify-access  body: { password }
+exports.verifyAccess = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  try {
+    if (req.method === 'OPTIONS') return res.status(204).send('');
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+    const pwd = (req.body && typeof req.body.password === 'string') ? String(req.body.password) : '';
+    const expected = process.env.PREVIEW_PASSWORD || 'mehomies2025';
+    if (!pwd || pwd !== expected) {
+      return res.status(401).json({ error: 'Mot de passe invalide' });
+    }
+
+    const secret = process.env.PREVIEW_SECRET || 'change-me-please';
+    const ttl = 24 * 60 * 60; // 24h
+    const exp = Math.floor(Date.now() / 1000) + ttl;
+    const payload = b64urlEncode(JSON.stringify({ exp }));
+    const sig = hmacSign(payload, secret);
+    const token = `${payload}.${sig}`;
+    res.setHeader('Set-Cookie', makeAccessCookie(token, ttl));
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error('verifyAccess error:', e.message);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// GET /api/check-access
+exports.checkAccess = onRequest({ region: 'europe-west1' }, async (req, res) => {
+  try {
+    if (req.method === 'OPTIONS') return res.status(204).send('');
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
+
+    const raw = String(req.headers.cookie || '');
+    const m = raw.match(/(?:^|; )mh_access=([^;]+)/);
+    if (!m) return res.status(401).json({ error: 'No access' });
+    const token = decodeURIComponent(m[1]);
+    const [payload, sig] = token.split('.');
+    if (!payload || !sig) return res.status(401).json({ error: 'Invalid token' });
+
+    const secret = process.env.PREVIEW_SECRET || 'change-me-please';
+    const expected = hmacSign(payload, secret);
+    if (expected !== sig) return res.status(401).json({ error: 'Bad signature' });
+
+    let data;
+    try { data = JSON.parse(b64urlDecode(payload)); } catch (_) {}
+    if (!data || typeof data.exp !== 'number') return res.status(401).json({ error: 'Invalid payload' });
+    if (data.exp <= Math.floor(Date.now() / 1000)) return res.status(401).json({ error: 'Expired' });
+
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error('checkAccess error:', e.message);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 // Scheduled cleanup: release reservations that exceeded our own expiresAt window
 exports.cleanupExpiredReservations = onSchedule({ schedule: 'every 1 minutes', region: 'europe-west1' }, async (event) => {
   const now = admin.firestore.Timestamp.now();

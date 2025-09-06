@@ -19,6 +19,8 @@
   "rewrites": [
     { "source": "/", "destination": "/coming-soon.html" },
     { "source": "/index", "destination": "/coming-soon.html" },
-    { "source": "/index.html", "destination": "/coming-soon.html" }
+    { "source": "/index.html", "destination": "/coming-soon.html" },
+    { "source": "/api/verify-access", "destination": "https://europe-west1-mehomiesstore.cloudfunctions.net/verifyAccess" },
+    { "source": "/api/check-access", "destination": "https://europe-west1-mehomiesstore.cloudfunctions.net/checkAccess" }
   ]
 }
