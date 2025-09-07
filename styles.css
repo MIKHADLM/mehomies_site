@@ -89,7 +89,7 @@ header { font-family: var(--font-sans); color: #fff; }
 
 /* Product page (produit.html) */
 #produit-nom {
-  font-size: var(--fs-900); /* down from default h1 */
+  font-size: var(--fs-800); /* down from default h1 */
   line-height: var(--lh-title);
 }
 
