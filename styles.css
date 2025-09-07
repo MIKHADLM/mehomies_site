@@ -123,9 +123,23 @@ header { font-family: var(--font-sans); color: #fff; }
   user-select: none;
   margin: 0;
   font-size: var(--fs-500); /* smaller title */
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid #e5e5e5; /* separator under title */
-  margin-bottom: 0.5rem; /* space before panel */
+}
+
+/* Container adds bottom separator and spacing so the line is under the panel when open,
+   and still leaves breathing room when closed */
+.product-accordion {
+  position: relative;
+  padding-bottom: 0.75rem; /* space above bottom line (visible even when closed) */
+  margin-bottom: 0.75rem;  /* space below the bottom line */
+}
+.product-accordion::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: #e5e5e5; /* bottom separator under the whole section */
 }
 
 /* Arrow indicator */
