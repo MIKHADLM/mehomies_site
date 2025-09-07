@@ -91,11 +91,13 @@ header { font-family: var(--font-sans); color: #fff; }
 #produit-nom {
   font-size: var(--fs-800); /* down from default h1 */
   line-height: var(--lh-title);
+  margin-bottom: 0.25rem; /* tighter spacing above price */
 }
 
 #produit-prix {
   font-size: var(--fs-700); /* down from default h2 */
   line-height: 1.35;
+  margin-top: 0.1rem; /* reduce gap from name */
 }
 
 /* Accessible focus */
