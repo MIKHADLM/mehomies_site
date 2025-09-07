@@ -100,6 +100,20 @@ header { font-family: var(--font-sans); color: #fff; }
   margin-top: 0.1rem; /* reduce gap from name */
 }
 
+/* Product page section separator and title */
+.section-separator {
+  border: 0;
+  height: 1px;
+  background: #e5e5e5;
+  margin: 1rem 0 0.75rem;
+}
+
+.product-section-title {
+  font-size: var(--fs-600);
+  line-height: 1.35;
+  margin: 0 0 0.5rem;
+}
+
 /* Accessible focus */
 :focus-visible {
   outline: 2px solid #0b5fff;
