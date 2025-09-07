@@ -76,6 +76,17 @@ header { font-family: var(--font-sans); color: #fff; }
   color: #fff;
 }
 
+/* Homepage product cards (index.html) */
+.product-card .product-link,
+.product-card .product-link:hover {
+  text-decoration: none; /* prevent underline on name and price */
+}
+
+.product-card h4,
+.product-card p {
+  font-size: var(--fs-400); /* slightly smaller than body */
+}
+
 /* Accessible focus */
 :focus-visible {
   outline: 2px solid #0b5fff;
