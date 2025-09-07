@@ -1,0 +1,83 @@
+/* Global typography and accessibility baseline (Option A: System UI stack) */
+:root {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --text-color: #222;
+  --bg-color: #fff;
+
+  /* Type scale */
+  --fs-900: clamp(2rem, 4vw, 2.75rem); /* h1 */
+  --fs-800: clamp(1.5rem, 3vw, 2rem);  /* h2 */
+  --fs-700: clamp(1.25rem, 2.4vw, 1.5rem); /* h3 */
+  --fs-600: 1.125rem; /* h4 */
+  --fs-500: 1rem;     /* body */
+  --fs-400: 0.95rem;  /* buttons / small UI */
+  --fs-300: 0.875rem; /* small */
+
+  --lh-tight: 1.2;
+  --lh-title: 1.25;
+  --lh-body: 1.6;
+}
+
+html { font-size: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text-color);
+  background: var(--bg-color);
+  line-height: var(--lh-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Comfortable reading width helper */
+.container-readable {
+  max-width: 70ch;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  margin: 0 0 0.5em;
+  font-weight: 600;
+}
+
+h1 { font-size: var(--fs-900); line-height: var(--lh-tight); font-weight: 700; }
+h2 { font-size: var(--fs-800); line-height: var(--lh-title); }
+h3 { font-size: var(--fs-700); line-height: var(--lh-title); }
+h4 { font-size: var(--fs-600); line-height: 1.35; }
+
+/* Text */
+p, li { font-size: var(--fs-500); }
+small { font-size: var(--fs-300); }
+
+/* Links */
+a { color: inherit; text-underline-offset: 2px; }
+a:hover { text-decoration: underline; }
+
+/* Buttons */
+.btn, button, [role="button"] {
+  font: inherit;
+  font-size: var(--fs-400);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Dark header keeps high contrast while inheriting global font */
+header { font-family: var(--font-sans); color: #fff; }
+
+/* Ticker */
+.ticker__item {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-size: var(--fs-400);
+  color: #fff;
+}
+
+/* Accessible focus */
+:focus-visible {
+  outline: 2px solid #0b5fff;
+  outline-offset: 2px;
+}
