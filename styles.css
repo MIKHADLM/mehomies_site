@@ -114,6 +114,48 @@ header { font-family: var(--font-sans); color: #fff; }
   margin: 0 0 0.5rem;
 }
 
+/* Product page accordion */
+.product-accordion-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+/* Arrow indicator */
+.product-accordion-title::after {
+  content: '▾';
+  font-size: 0.9em;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+#product-desc-title[aria-expanded="true"]::after {
+  transform: rotate(180deg);
+}
+
+/* Animated panel */
+.product-accordion-panel {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+
+/* Expand when title is expanded */
+#product-desc-title[aria-expanded="true"] + #product-desc-panel {
+  max-height: 600px;
+  opacity: 1;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .product-accordion-title::after { transition: none; }
+  .product-accordion-panel { transition: none; }
+}
+
 /* Accessible focus */
 :focus-visible {
   outline: 2px solid #0b5fff;

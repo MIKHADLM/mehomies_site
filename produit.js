@@ -388,3 +388,31 @@ if (!produitId) {
     isSwiping = false;
   });
 })();
+
+// Product description accordion: unified behavior (desktop and mobile)
+(function () {
+  const title = document.getElementById('product-desc-title');
+  const panel = document.getElementById('product-desc-panel');
+  if (!title || !panel) return;
+
+  function setState(expanded) {
+    title.setAttribute('aria-expanded', String(expanded));
+    panel.hidden = !expanded;
+  }
+
+  function toggle() {
+    const expanded = title.getAttribute('aria-expanded') === 'true';
+    setState(!expanded);
+  }
+
+  // Start collapsed for consistency; user can open on any viewport
+  setState(false);
+
+  title.addEventListener('click', toggle);
+  title.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggle();
+    }
+  });
+})();

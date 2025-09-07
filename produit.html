@@ -302,8 +302,20 @@
         Remise en main propre (Lille 59000 uniquement)
       </label>
       <hr class="section-separator">
-      <h3 class="product-section-title">Description du produit</h3>
-      <p id="produit-description"></p>
+      <div class="product-accordion" id="product-desc">
+        <h3
+          class="product-accordion-title"
+          id="product-desc-title"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="product-desc-panel"
+        >
+          Description du produit
+        </h3>
+        <div id="product-desc-panel" class="product-accordion-panel" hidden>
+          <div id="produit-description"></div>
+        </div>
+      </div>
     </div>
   </main>
   <div id="footer"></div>
