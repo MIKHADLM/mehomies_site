@@ -871,7 +871,7 @@ exports.verifyAccess = onRequest({ region: 'europe-west1' }, async (req, res) =>
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const pwd = (req.body && typeof req.body.password === 'string') ? String(req.body.password) : '';
-    const expected = process.env.PREVIEW_PASSWORD || 'mehomies2025';
+    const expected = process.env.PREVIEW_PASSWORD || 'mehomiesSoon';
     if (!pwd || pwd !== expected) {
       return res.status(401).json({ error: 'Mot de passe invalide' });
     }
