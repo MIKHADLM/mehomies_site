@@ -873,12 +873,12 @@ exports.verifyAccess = onRequest({ region: 'europe-west1', secrets: [previewPass
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const pwd = (req.body && typeof req.body.password === 'string') ? String(req.body.password) : '';
-    const expected = previewPassword.value();
+    const expected = process.env.FUNCTIONS_EMULATOR ? 'mehomiesSoon' : previewPassword.value();
     if (!pwd || pwd !== expected) {
       return res.status(401).json({ error: 'Mot de passe invalide' });
     }
 
-    const secret = previewSecret.value();
+    const secret = process.env.FUNCTIONS_EMULATOR ? 'local-dev-secret-key' : previewSecret.value();
     const ttl = 24 * 60 * 60; // 24h
     const exp = Math.floor(Date.now() / 1000) + ttl;
     const payload = b64urlEncode(JSON.stringify({ exp }));
@@ -905,7 +905,7 @@ exports.checkAccess = onRequest({ region: 'europe-west1', secrets: [previewSecre
     const [payload, sig] = token.split('.');
     if (!payload || !sig) return res.status(401).json({ error: 'Invalid token' });
 
-    const secret = previewSecret.value();
+    const secret = process.env.FUNCTIONS_EMULATOR ? 'local-dev-secret-key' : previewSecret.value();
     const expected = hmacSign(payload, secret);
     if (expected !== sig) return res.status(401).json({ error: 'Bad signature' });
 
