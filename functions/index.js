@@ -6,6 +6,8 @@ const { defineSecret } = require('firebase-functions/params');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 const stripeSecret = defineSecret('STRIPE_SECRET_KEY');
 const brevoApiKey = defineSecret('BREVO_API_KEY');
+const previewPassword = defineSecret('PREVIEW_PASSWORD');
+const previewSecret = defineSecret('PREVIEW_SECRET');
 
 // Do not load dotenv in production functions; use Secret Manager instead
 // require('dotenv').config();
@@ -865,18 +867,18 @@ function makeAccessCookie(value, maxAgeSeconds) {
 }
 
 // POST /api/verify-access  body: { password }
-exports.verifyAccess = onRequest({ region: 'europe-west1' }, async (req, res) => {
+exports.verifyAccess = onRequest({ region: 'europe-west1', secrets: [previewPassword, previewSecret] }, async (req, res) => {
   try {
     if (req.method === 'OPTIONS') return res.status(204).send('');
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const pwd = (req.body && typeof req.body.password === 'string') ? String(req.body.password) : '';
-    const expected = process.env.PREVIEW_PASSWORD || 'mehomiesSoon';
+    const expected = previewPassword.value();
     if (!pwd || pwd !== expected) {
       return res.status(401).json({ error: 'Mot de passe invalide' });
     }
 
-    const secret = process.env.PREVIEW_SECRET || 'change-me-please';
+    const secret = previewSecret.value();
     const ttl = 24 * 60 * 60; // 24h
     const exp = Math.floor(Date.now() / 1000) + ttl;
     const payload = b64urlEncode(JSON.stringify({ exp }));
@@ -891,7 +893,7 @@ exports.verifyAccess = onRequest({ region: 'europe-west1' }, async (req, res) =>
 });
 
 // GET /api/check-access
-exports.checkAccess = onRequest({ region: 'europe-west1' }, async (req, res) => {
+exports.checkAccess = onRequest({ region: 'europe-west1', secrets: [previewSecret] }, async (req, res) => {
   try {
     if (req.method === 'OPTIONS') return res.status(204).send('');
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -903,7 +905,7 @@ exports.checkAccess = onRequest({ region: 'europe-west1' }, async (req, res) => 
     const [payload, sig] = token.split('.');
     if (!payload || !sig) return res.status(401).json({ error: 'Invalid token' });
 
-    const secret = process.env.PREVIEW_SECRET || 'change-me-please';
+    const secret = previewSecret.value();
     const expected = hmacSign(payload, secret);
     if (expected !== sig) return res.status(401).json({ error: 'Bad signature' });
 
